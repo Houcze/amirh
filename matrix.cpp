@@ -766,9 +766,9 @@ array bias(array base, int i, int j)
 	cudaMemcpyFromSymbol(&fp_h, fp_add, sizeof(FP));
 
 	bias_i<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gdata, gresult_i, d1, d2, i);
-	bias_j<<<dim3(d1, d2), dim3(tile_dim, tile_dim)>>>(gresult, gresult_j, d1, d2, j);
-	f2d<<<dim3(d1, d2), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, gresult, d1, d2, fp_h);
-	cudaMemcpy(result, gresult_i, base.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
+	bias_j<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, d1, d2, j);
+	//f2d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, gresult, d1, d2, fp_h);
+	cudaMemcpy(result, gresult_j, base.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
 	array output=array(result, base.get_shape(), base.get_size(), base.get_dims(), gresult);
 	
