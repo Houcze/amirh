@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include <vector>
 #define d 1
+#define dx 1
+#define dy 1
+double omega = 0.0007292;
+
 
 void Jpp(array *A, array *B, array *output)
 {
@@ -92,6 +96,16 @@ void J(array *A, array *B, array *output)
 	*output = 2 * j1 - j2;
 }
 
+void zeta(array *u, array *v, array *output)
+{
+	// \zeta = (\partial{v}) / (\partial{x}) - (\partial{u}) / (\partial{y})
+	// in wind format
+	array v_x = (3 * (*v) - 4 * bias(*v, -1, 0) + bias(*v, -2, 0)) / (2 * dy);
+	array u_y = (3 * (*u) - 4 * bias(*u, 0, -1) + bias(*u, 0, -2)) / (2 * dx);
+	*output = v_x - u_y;
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -105,10 +119,10 @@ int main(int argc, char* argv[])
 	shape = a.get_shape();
 	array output{size, dims, shape};
 	J(&a, &a, &output);
-
+	auto b = cos(a);
 	double *data;
 	data = (double *) std::malloc(size * sizeof(double));
-	int status = output.dataSync(data);	
+	int status = b.dataSync(data);	
 	for(int i=0; i<a.get_size(); i++)
 	{
 		std::cout << *(data + i) << '\t';

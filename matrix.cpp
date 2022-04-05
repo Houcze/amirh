@@ -20,6 +20,7 @@ class array{
  		* */
 		array(char *, char *);
 		array(double *, size_t *, size_t, size_t, double *);
+		array(size_t, size_t, size_t *);
 		//array(array);
 		//~array();
 		/*
@@ -87,6 +88,19 @@ array::array(
 	cudaMalloc(&gdata, size * sizeof(double));
 	cudaMemcpy(gdata, input_gdata, size * sizeof(double), cudaMemcpyDeviceToDevice);
 	
+}
+
+array::array(
+	size_t input_size, 
+	size_t input_dims, 
+	size_t *input_shape
+)
+{
+	size = input_size;
+	dims = input_dims;
+	std::memcpy(shape, input_shape, size * sizeof(size_t));
+	data = (double *) std::malloc(size * sizeof(double));
+	cudaMalloc(&gdata, size * sizeof(double));
 }
 
 /*
@@ -747,11 +761,11 @@ array bias(array base, int i, int j)
 	double *result;
 	double *gresult_i;
 	double *gresult_j;
-	double *gresult;
+
 	result = (double *) std::malloc(base.get_size() * sizeof(double));
 	cudaMalloc(&gresult_i, base.get_size() * sizeof(double));
 	cudaMalloc(&gresult_j, base.get_size() * sizeof(double));
-	cudaMalloc(&gresult, base.get_size() * sizeof(double));
+
 	auto shape = base.get_shape();
 	size_t d1 = shape[0];
 	size_t d2 = shape[1];
@@ -769,12 +783,10 @@ array bias(array base, int i, int j)
 	bias_j<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, d1, d2, j);
 	//f2d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, gresult, d1, d2, fp_h);
 	cudaMemcpy(result, gresult_j, base.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
-
-	array output=array(result, base.get_shape(), base.get_size(), base.get_dims(), gresult);
+	array output=array(result, base.get_shape(), base.get_size(), base.get_dims(), gresult_j);
 	
 	cudaFree(gresult_i);
 	cudaFree(gresult_j);
-	cudaFree(gresult);
 	free(result);
 	return output;
 }
@@ -800,10 +812,155 @@ double array::max()
 }
 */
 
+__global__ void mf3d(double *input, double *output, int d1, int d2, int d3, double (*func)(double))
+{
+	int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+	int y_index = blockIdx.y * blockDim.y + threadIdx.y;
+	int z_index = blockIdx.z * blockDim.z + threadIdx.z;	
+
+	int index = x_index + y_index * d1 + z_index * d1 * d2;
+	if(index < d1 * d2 * d3)
+		output[index] = (*func)(input[index]);
+}
 
 
+__global__ void mf2d(double *input, double *output, int d1, int d2, double (*func)(double))
+{
+	int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+	int y_index = blockIdx.y * blockDim.y + threadIdx.y;	
+
+	int index = x_index + y_index * d1;
+	if(index < d1 * d2)
+		output[index] = (*func)(input[index]);
+}
 
 
+__global__ void mf1d(double *input, double *output, int d1, double (*func)(double))
+{
+	int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+	int index = x_index;
+	if(index < d1)
+		output[index] = (*func)(input[index]);
+}
+
+
+int 
+broadcast(
+	double *input,  
+	double *output, 
+	size_t dims, 
+	size_t size,
+	size_t* shape, 
+	double (*func)(double)
+)
+{
+	size_t d1 = shape[0];
+	size_t d2;
+	size_t d3;
+	
+	switch(dims){
+		case 1:
+			mf1d<<<dim3(d1 / tile_dim + 1), dim3(tile_dim)>>>(input, output, d1, func);
+			cudaDeviceSynchronize();
+	
+			break;
+		case 2:
+			{
+				d2 = shape[1];
+				mf2d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(input, output, d1, d2, func);
+				cudaDeviceSynchronize();
+			
+				cudaError_t error = cudaGetLastError();
+				if(error!=cudaSuccess)
+				{
+					fprintf(stderr,"ERROR: %s\n", cudaGetErrorString(error) );
+					exit(-1);
+				}
+				break;
+			}		
+		case 3:
+			d2 = shape[1];
+			d3 = shape[2];
+			mf3d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1, d3 / tile_dim + 1), dim3(tile_dim, tile_dim, tile_dim)>>>(input, output, d1, d2, d3, func);
+			cudaDeviceSynchronize();
+			break;
+	}	
+	return EXIT_SUCCESS;
+}
+
+typedef double (*FP1var)(double);
+__device__ double dsin(double x) {return sin(x);}
+__device__ double dcos(double x) {return cos(x);}
+__device__ FP1var fp_sin = dsin;
+__device__ FP1var fp_cos = dcos;
+
+array sin(array _this)
+{
+	double *result;
+	double *gresult;
+	
+	result = (double *) std::malloc(_this.get_size() * sizeof(double));
+	cudaMalloc(&gresult, _this.get_size() * sizeof(double));
+	
+	double *data;
+	data = (double *) std::malloc(_this.get_size() * sizeof(double)); 
+
+	_this.dataSync(data);
+
+	size_t* shape;
+	shape = (size_t *) std::malloc(_this.get_dims() * sizeof(size_t));
+	
+	_this.get_shape(shape);
+	double *gdata;
+	
+	cudaMalloc(&gdata, _this.get_size() * sizeof(double));
+	int status = _this.gdataSync(gdata);
+	//cudaMemcpy(gdata, data, _this.get_size() * sizeof(double), cudaMemcpyHostToDevice);
+
+	FP1var fp_h;
+	cudaMemcpyFromSymbol(&fp_h, fp_sin, sizeof(FP));
+	broadcast(gdata, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
+	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
+
+	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	cudaFree(gresult);
+	free(result);
+	return output;
+}
+
+array cos(array _this)
+{
+	double *result;
+	double *gresult;
+	
+	result = (double *) std::malloc(_this.get_size() * sizeof(double));
+	cudaMalloc(&gresult, _this.get_size() * sizeof(double));
+	
+	double* data;
+	data = (double *) std::malloc(_this.get_size() * sizeof(double)); 
+
+	_this.dataSync(data);
+
+	size_t* shape;
+	shape = (size_t *) std::malloc(_this.get_dims() * sizeof(size_t));
+	
+	_this.get_shape(shape);
+	double* gdata;
+	
+	cudaMalloc(&gdata, _this.get_size() * sizeof(double));
+	int status = _this.gdataSync(gdata);
+	//cudaMemcpy(gdata, data, _this.get_size() * sizeof(double), cudaMemcpyHostToDevice);
+
+	FP1var fp_h;
+	cudaMemcpyFromSymbol(&fp_h, fp_cos, sizeof(FP));
+	broadcast(gdata, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
+	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
+
+	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	cudaFree(gresult);
+	free(result);
+	return output;
+}
 
 
 
