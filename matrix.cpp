@@ -21,6 +21,7 @@ class array{
 		array(char *, char *);
 		array(double *, size_t *, size_t, size_t, double *);
 		array(size_t, size_t, size_t *);
+		~array();
 		//array(array);
 		//~array();
 		/*
@@ -101,6 +102,20 @@ array::array(
 	std::memcpy(shape, input_shape, size * sizeof(size_t));
 	data = (double *) std::malloc(size * sizeof(double));
 	cudaMalloc(&gdata, size * sizeof(double));
+}
+
+array::~array()
+{
+	/*
+	* 	size_t size{1};
+		size_t dims;
+		double *data;
+		double *gdata;
+		size_t *shape;
+	*/
+	free(data);
+	cudaFree(gdata);
+	free(shape);
 }
 
 /*
