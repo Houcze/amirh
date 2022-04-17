@@ -13,24 +13,24 @@ const static int tile_dim = 32;
 
 typedef double (*FP)(double, double);
 
-class array{
+class tensor{
 	public:
 		/*
  		* 构造函数
  		* */
-		array(char *, char *);
-		array(double *, size_t *, size_t, size_t, double *);
-		array(size_t, size_t, size_t *);
-		~array();
-		//array(array);
-		//~array();
+		tensor(char *, char *);
+		tensor(double *, size_t *, size_t, size_t, double *);
+		tensor(size_t, size_t, size_t *);
+		~tensor();
+		//tensor(tensor);
+		//~tensor();
 		/*
  		* 四则运算
  		* */
-		array operator+(array);
-		array operator-(array);
-		array operator*(array);
-		array operator/(array);
+		tensor operator+(tensor);
+		tensor operator-(tensor);
+		tensor operator*(tensor);
+		tensor operator/(tensor);
 		/*
  		* 常用的取形操作
  		* */
@@ -45,7 +45,7 @@ class array{
 		/*
  		* 运算前的检查数组兼容性的函数
  		* */
-		bool check(array *);
+		bool check(tensor *);
 	private:
 		size_t size{1};
 		size_t dims;
@@ -59,7 +59,7 @@ class array{
 /*
 * 两种类型的构造函数
 */
-array::array(char *filepath, char *varname)
+tensor::tensor(char *filepath, char *varname)
 {
 	// size = malloc_usable_size(data) / sizeof(double);	
 	nc_get_size(&size, &dims, filepath, varname);
@@ -72,7 +72,7 @@ array::array(char *filepath, char *varname)
 }
 
 
-array::array(
+tensor::tensor(
 	double *input_data, 
 	size_t *input_shape, 
 	size_t input_size, 
@@ -91,7 +91,7 @@ array::array(
 	
 }
 
-array::array(
+tensor::tensor(
 	size_t input_size, 
 	size_t input_dims, 
 	size_t *input_shape
@@ -104,7 +104,7 @@ array::array(
 	cudaMalloc(&gdata, size * sizeof(double));
 }
 
-array::~array()
+tensor::~tensor()
 {
 	/*
 	* 	size_t size{1};
@@ -119,8 +119,8 @@ array::~array()
 }
 
 /*
-array::array(
-	array base
+tensor::tensor(
+	tensor base
 )
 {
 	size = base.get_size();
@@ -134,9 +134,9 @@ array::array(
 }
 */
 
-// To destroy an array
+// To destroy an tensor
 /*
-~array::array()
+~tensor::tensor()
 {
 	cudaFree(gdata);
 	free(data);
@@ -144,21 +144,21 @@ array::array(
 }
 */
 
-int array::get_size(){
+int tensor::get_size(){
 	return size;
 }
 
-size_t* array::get_shape()
+size_t* tensor::get_shape()
 {	
 	return shape;
 }
 
-size_t array::get_dims()
+size_t tensor::get_dims()
 {
 	return dims;
 }
 
-bool array::check(array *element)
+bool tensor::check(tensor *element)
 {
 	if((*element).get_size() == size)
 	{
@@ -168,19 +168,19 @@ bool array::check(array *element)
 }
 
 
-int array::dataSync(double *var)
+int tensor::dataSync(double *var)
 {
 	std::memcpy(var, data, size * sizeof(double));
 	return EXIT_SUCCESS;
 }
 
-int array::gdataSync(double *var)
+int tensor::gdataSync(double *var)
 {
 	cudaMemcpy(var, gdata, size * sizeof(double), cudaMemcpyDeviceToDevice);
 	return EXIT_SUCCESS;
 }
 
-int array::get_shape(size_t* var_shape)
+int tensor::get_shape(size_t* var_shape)
 {	
 	std::memcpy(var_shape, shape, dims * sizeof(double));
 	return EXIT_SUCCESS;
@@ -370,7 +370,7 @@ broadcast(
 	return EXIT_SUCCESS;
 }
 
-array array::operator+(array element)
+tensor tensor::operator+(tensor element)
 {
     if(check(&element))
     {
@@ -388,12 +388,12 @@ array array::operator+(array element)
         alg(gdata, bdata, gresult, dims, size, shape, fp_h);
         cudaMemcpy(result, gresult, size * sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(gdata);
-        return array(result, shape, size, dims, gresult);
+        return tensor(result, shape, size, dims, gresult);
     }
 	
 }
 
-array array::operator-(array element)
+tensor tensor::operator-(tensor element)
 {
     if(check(&element))
     {
@@ -411,13 +411,13 @@ array array::operator-(array element)
         alg(gdata, bdata, gresult, dims, size, shape, fp_h);
         cudaMemcpy(result, gresult, size * sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(gdata);
-        return array(result, shape, size, dims, gresult);
+        return tensor(result, shape, size, dims, gresult);
     }
 	
 }
 
 
-array array::operator*(array element)
+tensor tensor::operator*(tensor element)
 {
     if(check(&element))
     {
@@ -435,7 +435,7 @@ array array::operator*(array element)
         alg(gdata, bdata, gresult, dims, size, shape, fp_h);
         cudaMemcpy(result, gresult, size * sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(bdata);
-        return array(result, shape, size, dims, gresult);
+        return tensor(result, shape, size, dims, gresult);
     }
 	
 }
@@ -443,7 +443,7 @@ array array::operator*(array element)
 
 
 
-array array::operator/(array element)
+tensor tensor::operator/(tensor element)
 {
     if(check(&element))
     {
@@ -461,13 +461,13 @@ array array::operator/(array element)
         alg(gdata, bdata, gresult, dims, size, shape, fp_h);
         cudaMemcpy(result, gresult, size * sizeof(double), cudaMemcpyDeviceToHost);
 		cudaFree(gdata);
-        return array(result, shape, size, dims, gresult);
+        return tensor(result, shape, size, dims, gresult);
     }
 	
 }
 
 
-array operator+(array _this, double coff)
+tensor operator+(tensor _this, double coff)
 {
 	double *result;
 	double *gresult;
@@ -495,13 +495,13 @@ array operator+(array _this, double coff)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator+(double coff, array _this)
+tensor operator+(double coff, tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -529,13 +529,13 @@ array operator+(double coff, array _this)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator-(array _this, double coff)
+tensor operator-(tensor _this, double coff)
 {
 	double *result;
 	double *gresult;
@@ -563,13 +563,13 @@ array operator-(array _this, double coff)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator-(double coff, array _this)
+tensor operator-(double coff, tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -597,14 +597,14 @@ array operator-(double coff, array _this)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
 // mul with a coff
-array operator*(array _this, double coff)
+tensor operator*(tensor _this, double coff)
 {
 	double *result;
 	double *gresult;
@@ -632,13 +632,13 @@ array operator*(array _this, double coff)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator*(double coff, array _this)
+tensor operator*(double coff, tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -666,13 +666,13 @@ array operator*(double coff, array _this)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator/(array _this, double coff)
+tensor operator/(tensor _this, double coff)
 {
 	double *result;
 	double *gresult;
@@ -700,13 +700,13 @@ array operator/(array _this, double coff)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array operator/(double coff, array _this)
+tensor operator/(double coff, tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -734,7 +734,7 @@ array operator/(double coff, array _this)
 	broadcast(gdata, &coff, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
@@ -768,7 +768,7 @@ __global__ void bias_j(double *input, double *output, int width, int height, int
 }
 
 
-array bias(array base, int i, int j)
+tensor bias(tensor base, int i, int j)
 {
 	/*
 	* 该函数只针对2d数组进行定义，但是不检查数组形状
@@ -798,7 +798,7 @@ array bias(array base, int i, int j)
 	bias_j<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, d1, d2, j);
 	//f2d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, gresult, d1, d2, fp_h);
 	cudaMemcpy(result, gresult_j, base.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
-	array output=array(result, base.get_shape(), base.get_size(), base.get_dims(), gresult_j);
+	tensor output=tensor(result, base.get_shape(), base.get_size(), base.get_dims(), gresult_j);
 	
 	cudaFree(gresult_i);
 	cudaFree(gresult_j);
@@ -807,7 +807,7 @@ array bias(array base, int i, int j)
 }
 
 /*
-double array::max()
+double tensor::max()
 {
 	double m_val{0.};
 	for(int i=0; i<d1; i++)
@@ -909,7 +909,7 @@ __device__ double dcos(double x) {return cos(x);}
 __device__ FP1var fp_sin = dsin;
 __device__ FP1var fp_cos = dcos;
 
-array sin(array _this)
+tensor sin(tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -937,13 +937,13 @@ array sin(array _this)
 	broadcast(gdata, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
 
-array cos(array _this)
+tensor cos(tensor _this)
 {
 	double *result;
 	double *gresult;
@@ -971,15 +971,9 @@ array cos(array _this)
 	broadcast(gdata, gresult, _this.get_dims(), _this.get_size(), shape, fp_h);
 	cudaMemcpy(result, gresult, _this.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
 
-	array output = array(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
+	tensor output = tensor(result, _this.get_shape(), _this.get_size(), _this.get_dims(), gresult);
 	cudaFree(gresult);
 	free(result);
 	return output;
 }
-
-
-
-
-
-
 
