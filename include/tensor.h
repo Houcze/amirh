@@ -138,6 +138,32 @@ namespace io
 
     io::cuda::tensor operator/(io::cuda::tensor, io::cuda::tensor);
 
+
+    
+
+	template <class C>
+	io::cpu::tensor operator+(io::cpu::tensor, C);
+
+	template <class C>
+	io::cpu::tensor operator-(io::cpu::tensor, C);
+
+	template <class C>
+	io::cpu::tensor operator*(io::cpu::tensor, C);
+
+	template <class C>
+	io::cpu::tensor operator/(io::cpu::tensor, C);
+
+
+	template <class C>
+	io::cpu::tensor operator+(C, io::cpu::tensor);
+	template <class C>
+	io::cpu::tensor operator-(C, io::cpu::tensor);
+	template <class C>
+	io::cpu::tensor operator*(C, io::cpu::tensor);
+	template <class C>
+	io::cpu::tensorr operator/(C, io::cpu::tensor);
+
+
     io::cpu::tensor operator+(io::cpu::tensor, io::cpu::tensor);
 
     io::cpu::tensor operator-(io::cpu::tensor, io::cpu::tensor);
@@ -145,20 +171,6 @@ namespace io
     io::cpu::tensor operator*(io::cpu::tensor, io::cpu::tensor);
 
     io::cpu::tensor operator/(io::cpu::tensor, io::cpu::tensor);
-
-    
-
-	template <class T, class C>
-	io::cpu::tensor operator+(T, C);
-
-	template <class T, class C>
-	io::cpu::tensor operator-(T, C);
-		
-	template <class T, class C>
-	io::cpu::tensor operator*(T, C);
-
-	template <class T, class C>
-	io::cpu::tensor operator/(T, C);
 
 	template <class T>
 	T sin(T);
