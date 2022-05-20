@@ -303,7 +303,9 @@ broadcast
 			{
 				if (is_constant)
 				{
-					__device__ double input2_gpu = (*input2);
+					double *input2_gpu;
+					cudaMalloc(&input2_gpu, sizeof(double));
+					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
 					kernel(input1, input2_gpu, result, d1, func);
 					cudaFree(&input2_gpu);
 				}
@@ -318,7 +320,9 @@ broadcast
 				d2 = shape[1];
 				if (is_constant)
 				{
-					__device__ double input2_gpu = (*input2);
+					double *input2_gpu;
+					cudaMalloc(&input2_gpu, sizeof(double));
+					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
 					kernel(input1, input2_gpu, result, d1, d2, func);
 					cudaFree(&input2_gpu);
 				}
@@ -334,7 +338,9 @@ broadcast
 				d3 = shape[2];
 				if (is_constant)
 				{
-					__device__ double input2_gpu = (*input2);
+					double *input2_gpu;
+					cudaMalloc(&input2_gpu, sizeof(double));
+					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
 					kernel(input1, input2_gpu, result, d1, d2, d3, func);
 					cudaFree(&input2_gpu);
 				}
@@ -393,9 +399,9 @@ broadcast
 	return EXIT_SUCCESS;
 }
 
-template <class T=io::cuda::tensor, class C=io::cuda::tensor>
+
 io::cuda::tensor 
-io::operator+(T base, C element)
+io::operator+(io::cuda::tensor  base, io::cuda::tensor  element)
 {
     if(io::check(&base, &element))
     {
@@ -421,9 +427,9 @@ io::operator+(T base, C element)
 }
 
 
-template <class T=io::cuda::tensor, class C>
+template <class C>
 io::cuda::tensor 
-io::operator+(T base, C element)
+io::operator+(io::cuda::tensor base, C element)
 {
     try
 	{
@@ -442,15 +448,15 @@ io::operator+(T base, C element)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
 
 
-template <class T, class C=io::cuda::tensor>
+template <class C>
 io::cuda::tensor 
-io::operator+(T element, C base)
+io::operator+(C element, io::cuda::tensor base)
 {
     try
 	{
@@ -469,7 +475,7 @@ io::operator+(T element, C base)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
@@ -501,9 +507,9 @@ io::operator-(io::cuda::tensor base, io::cuda::tensor element)
 	}
 }
 
-template <class T=io::cuda::tensor, class C>
+template <class C>
 io::cuda::tensor 
-io::operator-(T base, C element)
+io::operator-(io::cuda::tensor base, C element)
 {
     try
 	{
@@ -522,14 +528,14 @@ io::operator-(T base, C element)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
 
-template <class T, class C=io::cuda::tensor>
+template <class C>
 io::cuda::tensor 
-io::operator-(T element, C base)
+io::operator-(C element, io::cuda::tensor base)
 {
     try
 	{
@@ -548,7 +554,7 @@ io::operator-(T element, C base)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
@@ -579,9 +585,9 @@ io::operator*(io::cuda::tensor base, io::cuda::tensor element)
 	}
 }
 
-template <class T=io::cuda::tensor, class C>
+template <class C>
 io::cuda::tensor 
-io::operator*(T base, C element)
+io::operator*(io::cuda::tensor base, C element)
 {
     try
 	{
@@ -600,15 +606,15 @@ io::operator*(T base, C element)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
 
 
-template <class T, class C=io::cuda::tensor>
+template <class C>
 io::cuda::tensor 
-io::operator*(T element, C base)
+io::operator*(C element, io::cuda::tensor base)
 {
     try
 	{
@@ -627,7 +633,7 @@ io::operator*(T element, C base)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
@@ -658,9 +664,9 @@ io::operator/(io::cuda::tensor base, io::cuda::tensor element)
 	}
 }
 
-template <class T=io::cuda::tensor, class C>
+template <class C>
 io::cuda::tensor 
-io::operator+(T base, C element)
+io::operator/(io::cuda::tensor base, C element)
 {
     try
 	{
@@ -679,14 +685,14 @@ io::operator+(T base, C element)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }
 
-template <class T, class C=io::cuda::tensor>
+template <class C>
 io::cuda::tensor 
-io::operator/(T element, C base)
+io::operator/(C element, io::cuda::tensor base)
 {
     try
 	{
@@ -705,7 +711,7 @@ io::operator/(T element, C base)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what("Unsupported Constant Type") << '\n';
+		std::cerr << e.what() << '\n';
 	}
 	
 }

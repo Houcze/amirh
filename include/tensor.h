@@ -107,18 +107,46 @@ namespace io
     template <class T>
     bool check(T *input1, T *input2);
 
-	template <class T, class C>
-	io::cuda::tensor operator+(T, C);
+	template <class C>
+	io::cuda::tensor operator+(io::cuda::tensor, C);
 
-	template <class T, class C>
-	io::cuda::tensor operator-(T, C);
-		
-	template <class T, class C>
-	io::cuda::tensor operator*(T, C);
+	template <class C>
+	io::cuda::tensor operator-(io::cuda::tensor, C);
 
-	template <class T, class C>
-	io::cuda::tensor operator/(T, C);
+	template <class C>
+	io::cuda::tensor operator*(io::cuda::tensor, C);
 
+	template <class C>
+	io::cuda::tensor operator/(io::cuda::tensor, C);
+
+
+	template <class C>
+	io::cuda::tensor operator+(C, io::cuda::tensor);
+	template <class C>
+	io::cuda::tensor operator-(C, io::cuda::tensor);
+	template <class C>
+	io::cuda::tensor operator*(C, io::cuda::tensor);
+	template <class C>
+	io::cuda::tensor operator/(C, io::cuda::tensor);
+
+
+    io::cuda::tensor operator+(io::cuda::tensor, io::cuda::tensor);
+
+    io::cuda::tensor operator-(io::cuda::tensor, io::cuda::tensor);
+
+    io::cuda::tensor operator*(io::cuda::tensor, io::cuda::tensor);
+
+    io::cuda::tensor operator/(io::cuda::tensor, io::cuda::tensor);
+
+    io::cpu::tensor operator+(io::cpu::tensor, io::cpu::tensor);
+
+    io::cpu::tensor operator-(io::cpu::tensor, io::cpu::tensor);
+
+    io::cpu::tensor operator*(io::cpu::tensor, io::cpu::tensor);
+
+    io::cpu::tensor operator/(io::cpu::tensor, io::cpu::tensor);
+
+    
 
 	template <class T, class C>
 	io::cpu::tensor operator+(T, C);
