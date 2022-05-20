@@ -717,7 +717,7 @@ io::operator/(C element, io::cuda::tensor base)
 }
 
 
-/*
+
 // 完成中央差分的基础函数
 __global__ void bias_i(double *input, double *output, int width, int height, int i)
 {
@@ -745,42 +745,35 @@ __global__ void bias_j(double *input, double *output, int width, int height, int
 }
 
 
-tensor bias(tensor base, int i, int j)
+io::cuda::tensor bias(io::cuda::tensor base, int i, int j)
 {
 	/*
 	* 该函数只针对2d数组进行定义，但是不检查数组形状
 	*/
-/*
-	double *result;
-	double *gresult_i;
-	double *gresult_j;
-	result = (double *) std::malloc(base.get_size() * sizeof(double));
-	cudaMalloc(&gresult_i, base.get_size() * sizeof(double));
-	cudaMalloc(&gresult_j, base.get_size() * sizeof(double));
 
-	auto shape = base.get_shape();
-	size_t d1 = shape[0];
-	size_t d2 = shape[1];
+	double *result_i;
+	double *result_j;
 
- 	double *gdata;
-	cudaMalloc(&gdata, base.get_size() * sizeof(double));
-	base.gdataSync(gdata);
+	cudaMalloc(&result_i, base.size * sizeof(double));
+	cudaMalloc(&result_j, base.size * sizeof(double));
+
+
+	size_t d1 = base.shape[0];
+	size_t d2 = base.shape[1];
 	
 	FP fp_h;
 	cudaMemcpyFromSymbol(&fp_h, fp_add, sizeof(FP));
-	bias_i<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gdata, gresult_i, d1, d2, i);
-	bias_j<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, d1, d2, j);
+	bias_i<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(base.data, result_i, d1, d2, i);
+	bias_j<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(result_i, result_j, d1, d2, j);
 	//f2d<<<dim3(d1 / tile_dim + 1, d2 / tile_dim + 1), dim3(tile_dim, tile_dim)>>>(gresult_i, gresult_j, gresult, d1, d2, fp_h);
-	cudaMemcpy(result, gresult_j, base.get_size() * sizeof(double), cudaMemcpyDeviceToHost);
-	tensor output=tensor(result, base.get_shape(), base.get_size(), base.get_dims(), gresult_j);
 	
-	cudaFree(gresult_i);
-	cudaFree(gresult_j);
-	cudaFree(gdata);
-	free(result);
+	io::cuda::tensor output=io::cuda::tensor(result_j, base.shape, base.size, base.dims);
+	
+	cudaFree(result_i);
+	cudaFree(result_j);
 	return output;
 }
-*/
+
 
 
 typedef double (*FP1var)(double);

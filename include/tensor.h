@@ -61,7 +61,7 @@ namespace io
 				}
 				tensor(char*, char *);
 				tensor(double *, size_t *, size_t, size_t);
-				double *get_data();
+				tensor bias(tensor, int, int);
 
 		};
 
