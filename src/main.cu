@@ -1,4 +1,4 @@
-#include <io::cuda::tensor.h>
+#include <tensor.h>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
