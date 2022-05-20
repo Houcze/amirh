@@ -14,7 +14,7 @@ void Jpp(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 		(bias(*A, 0, 1) - bias(*A, 0, -1)) * (bias(*B, -1, 0) - bias(*B, 1, 0)) - 
 		(bias(*A, -1, 0)  - bias(*A, 1, 0)) * (bias(*B, 0, 1) - bias(*B, 0, -1)) 
 	);
-	std::cout << "Here!!!" << std::endl;
+
 }
 
 void Jpm1(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
@@ -110,24 +110,6 @@ void zeta(io::cuda::tensor *u, io::cuda::tensor *v, io::cuda::tensor *output)
 
 int main(int argc, char* argv[])
 {
-	io::cuda::tensor a{argv[1], argv[2]};
-	size_t size;
-	size_t dims;
-	size = a.get_size();
-	dims = a.get_dims();
-	size_t * shape;
-	shape = (size_t *) std::malloc(dims * sizeof(size_t));
-	shape = a.get_shape();
-	io::cuda::tensor output{size, dims, shape};
-	J(&a, &a, &output);
-	auto b = cos(a);
-	double *data;
-	data = (double *) std::malloc(size * sizeof(double));
-	int status = b.dataSync(data);	
-	for(int i=0; i<a.get_size(); i++)
-	{
-		std::cout << *(data + i) << '\t';
-	}
-	std::cout << "I am J here!!" << std::endl;
+	;
 			
 }
