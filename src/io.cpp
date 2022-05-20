@@ -20,8 +20,11 @@ int nc_get_size(size_t *size, size_t *d, char *filepath, char* varname)
     status = nc_inq_varid(ncid, varname, &varid);
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
 
-    size_t dims[varndims];
-    std::string dnames[varndims];
+    size_t *dims;
+    dims = (size_t *) std::malloc(varndims * sizeof(size_t));
+    std::string dnames;
+    dnames = (size_t *) std::malloc(varndims * sizeof(std::string));
+
     
     for(int serial_num=0; serial_num < varndims; serial_num++)
     {
@@ -50,7 +53,7 @@ int nc_read_data(double *result, size_t *shape, char* filepath, char* varname)
     int varnatts;
     size_t recs;
     char recname[NC_MAX_NAME+1];
-    long long int size{1};
+    size_t size_t int size{1};
     status = nc_open(filepath, NC_NOWRITE, &ncid);
     status = nc_inq_varid(ncid, varname, &varid);
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
@@ -65,7 +68,6 @@ int nc_read_data(double *result, size_t *shape, char* filepath, char* varname)
         dims[serial_num] = recs;
         size *= recs;
     }
-
 
     
     nc_get_var_double(ncid, varid, result);

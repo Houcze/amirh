@@ -1,4 +1,4 @@
-#include <matrix.cpp>
+#include <tensor.cu>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -14,6 +14,7 @@ void Jpp(tensor *A, tensor *B, tensor *output)
 		(bias(*A, 0, 1) - bias(*A, 0, -1)) * (bias(*B, -1, 0) - bias(*B, 1, 0)) - 
 		(bias(*A, -1, 0)  - bias(*A, 1, 0)) * (bias(*B, 0, 1) - bias(*B, 0, -1)) 
 	);
+	std::cout << "Here!!!" << std::endl;
 }
 
 void Jpm1(tensor *A, tensor *B, tensor *output)
@@ -127,5 +128,6 @@ int main(int argc, char* argv[])
 	{
 		std::cout << *(data + i) << '\t';
 	}
+	std::cout << "I am J here!!" << std::endl;
 			
 }
