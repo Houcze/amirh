@@ -1,4 +1,9 @@
-build/amirh.exe: amirh.cu tensor.cu io.cpp
-	nvcc src/amirh.cu -o build/amirh.exe -I./include -L./libs -lnetcdf -ltensor
-clean:
+build/amirh.exe: src/* lib64/*
+	nvcc src/amirh.cu -o build/amirh.exe -I./include -L./lib64 -lnetcdf -lio
+clean:	
 	rm build/amirh.exe
+
+test: src/* lib64/*
+	g++ test.cpp -o test.exe -I./include -L./lib64 -lnetcdf -lio
+testclean:
+	rm test.exe

@@ -11,8 +11,8 @@ double omega = 0.0007292;
 void Jpp(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1 / (4 * d * d)) * (
-		(bias(*A, 0, 1) - bias(*A, 0, -1)) * (bias(*B, -1, 0) - bias(*B, 1, 0)) - 
-		(bias(*A, -1, 0)  - bias(*A, 1, 0)) * (bias(*B, 0, 1) - bias(*B, 0, -1)) 
+		(io::cuda::bias(*A, 0, 1) - io::cuda::bias(*A, 0, -1)) * (io::cuda::bias(*B, -1, 0) - io::cuda::bias(*B, 1, 0)) - 
+		(io::cuda::bias(*A, -1, 0)  - io::cuda::bias(*A, 1, 0)) * (io::cuda::bias(*B, 0, 1) - io::cuda::bias(*B, 0, -1)) 
 	);
 
 }
@@ -20,48 +20,48 @@ void Jpp(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 void Jpm1(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1 / (4 * d * d)) * (
-		bias(*A, -1, 1) * (bias(*B, -1, 0) - bias(*B, 0, 1)) -
-		bias(*A, 1, -1) * (bias(*B, 0, -1) - bias(*B, 1, 0)) + 
-		bias(*A, -1, -1) * (bias(*B, 0, -1) - bias(*B, -1, 0)) - 
-		bias(*A, 1, 1) * (bias(*B, 1, 0) - bias(*B, 0, 1))
+		io::cuda::bias(*A, -1, 1) * (io::cuda::bias(*B, -1, 0) - io::cuda::bias(*B, 0, 1)) -
+		io::cuda::bias(*A, 1, -1) * (io::cuda::bias(*B, 0, -1) - io::cuda::bias(*B, 1, 0)) + 
+		io::cuda::bias(*A, -1, -1) * (io::cuda::bias(*B, 0, -1) - io::cuda::bias(*B, -1, 0)) - 
+		io::cuda::bias(*A, 1, 1) * (io::cuda::bias(*B, 1, 0) - io::cuda::bias(*B, 0, 1))
 	);
 }
 
 void Jmp1(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1 / (4 * d * d)) * (
-		bias(*A, 0, 1) * (bias(*B, -1, 1) - bias(*B, 1, 1)) - 
-		bias(*A, 0, -1) * (bias(*B, -1, -1) - bias(*B, 1, -1)) - 
-		bias(*A, -1, 0) * (bias(*B, -1, 1) - bias(*B, -1, -1)) + 
-		bias(*A, 1, 0) * (bias(*B, 1, 1) - bias(*B, 1, -1))
+		io::cuda::bias(*A, 0, 1) * (io::cuda::bias(*B, -1, 1) - io::cuda::bias(*B, 1, 1)) - 
+		io::cuda::bias(*A, 0, -1) * (io::cuda::bias(*B, -1, -1) - io::cuda::bias(*B, 1, -1)) - 
+		io::cuda::bias(*A, -1, 0) * (io::cuda::bias(*B, -1, 1) - io::cuda::bias(*B, -1, -1)) + 
+		io::cuda::bias(*A, 1, 0) * (io::cuda::bias(*B, 1, 1) - io::cuda::bias(*B, 1, -1))
 	);
 }
 
 void Jmm(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1 / (8 * d * d)) * (
-		(bias(*A, -1, 1) - bias(*A, 1, -1)) * (bias(*B, -1, -1) - bias(*B, 1, 1)) -
-		(bias(*A, -1, -1) - bias(*A, 1, 1)) * (bias(*B, -1, 1) - bias(*B, 1, -1))
+		(io::cuda::bias(*A, -1, 1) - io::cuda::bias(*A, 1, -1)) * (io::cuda::bias(*B, -1, -1) - io::cuda::bias(*B, 1, 1)) -
+		(io::cuda::bias(*A, -1, -1) - io::cuda::bias(*A, 1, 1)) * (io::cuda::bias(*B, -1, 1) - io::cuda::bias(*B, 1, -1))
 	);
 }
 
 void Jmp2(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1/ (8 * d * d)) * (
-		bias(*A, -1, 1) * (bias(*B, -2, 0) - bias(*B, 0, 2)) - 
-		bias(*A, 1, -1) * (bias(*B, 0, -2) - bias(*B, 0, 1)) - 
-		bias(*A, -1, -1) * (bias(*B, -2, 0) - bias(*B, 0, -2)) + 
-		bias(*A, 1, 1) * (bias(*B, 0, 2) - bias(*B, 2, 0)) 
+		io::cuda::bias(*A, -1, 1) * (io::cuda::bias(*B, -2, 0) - io::cuda::bias(*B, 0, 2)) - 
+		io::cuda::bias(*A, 1, -1) * (io::cuda::bias(*B, 0, -2) - io::cuda::bias(*B, 0, 1)) - 
+		io::cuda::bias(*A, -1, -1) * (io::cuda::bias(*B, -2, 0) - io::cuda::bias(*B, 0, -2)) + 
+		io::cuda::bias(*A, 1, 1) * (io::cuda::bias(*B, 0, 2) - io::cuda::bias(*B, 2, 0)) 
 	);
 }
 
 void Jpm2(io::cuda::tensor *A, io::cuda::tensor *B, io::cuda::tensor *output)
 {
 	*output = (1 / ( 8 * d * d)) * (
-        bias(*A, -2, 0) * (bias(*B, -1, -1) - bias(*B, -1, 1)) -
-        bias(*A, 2, 0) * (bias(*B, 1, -1) - bias(*B, 1, 1)) -
-        bias(*A, 0, 2) * (bias(*B, 1, -1) - bias(*B, -1, -1)) +
-        bias(*A, 0, -2) * (bias(*B, 1, 1) - bias(*B, -1, 1))	
+        io::cuda::bias(*A, -2, 0) * (io::cuda::bias(*B, -1, -1) - io::cuda::bias(*B, -1, 1)) -
+        io::cuda::bias(*A, 2, 0) * (io::cuda::bias(*B, 1, -1) - io::cuda::bias(*B, 1, 1)) -
+        io::cuda::bias(*A, 0, 2) * (io::cuda::bias(*B, 1, -1) - io::cuda::bias(*B, -1, -1)) +
+        io::cuda::bias(*A, 0, -2) * (io::cuda::bias(*B, 1, 1) - io::cuda::bias(*B, -1, 1))	
 	);
 }
 
@@ -101,8 +101,8 @@ void zeta(io::cuda::tensor *u, io::cuda::tensor *v, io::cuda::tensor *output)
 {
 	// \zeta = (\partial{v}) / (\partial{x}) - (\partial{u}) / (\partial{y})
 	// in wind format
-	io::cuda::tensor v_x = (3 * (*v) - 4 * bias(*v, -1, 0) + bias(*v, -2, 0)) / (2 * dy);
-	io::cuda::tensor u_y = (3 * (*u) - 4 * bias(*u, 0, -1) + bias(*u, 0, -2)) / (2 * dx);
+	io::cuda::tensor v_x = (3 * (*v) - 4 * io::cuda::bias(*v, -1, 0) + io::cuda::bias(*v, -2, 0)) / (2 * dy);
+	io::cuda::tensor u_y = (3 * (*u) - 4 * io::cuda::bias(*u, 0, -1) + io::cuda::bias(*u, 0, -2)) / (2 * dx);
 	*output = v_x - u_y;
 }
 
@@ -110,6 +110,19 @@ void zeta(io::cuda::tensor *u, io::cuda::tensor *v, io::cuda::tensor *output)
 
 int main(int argc, char* argv[])
 {
-	;
-			
+	io::cpu::tensor a(argv[1], argv[2]);
+	io::cpu::tensor b(argv[1], argv[2]);
+	std::cout << "1" << a.data[0] << std::endl;
+	std::cout << "2" << b.data[0] << std::endl;
+
+	io::cuda::tensor c = io::cpu_to_cuda(a);
+	io::cpu::tensor a2 = io::cuda_to_cpu(c);
+	std::cout << "3" << a2.data[0] << std::endl;
+
+
+	io::cuda::tensor e = io::cpu_to_cuda(b);
+	io::cuda::tensor w = c + e;
+	io::cpu::tensor w2 = io::cuda_to_cpu(w);
+	std::cout << w2.data[0] << std::endl;
+	std::cout << "No problem" << std::endl;
 }
