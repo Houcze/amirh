@@ -6,11 +6,9 @@
 #include <cuda_runtime.h>
 #include <stdexcept>
 #include <string>
+#include <tensor.h>
 #define MATHERROR 1
 
-enum DEVICE {
-	CPU=0, CUDA, HIP
-};
 
 #define cuda_check_compute_result() {cudaError_t error = cudaGetLastError(); if(error!=cudaSuccess){ fprintf(stderr,"ERROR: %s\n", cudaGetErrorString(error) );}}
 
@@ -18,147 +16,22 @@ const static int tile_dim = 32;
 
 typedef double (*FP)(double, double);
 
-namespace io
+template <class T>
+bool io::check(T *input1, T *input2)
 {
-	class tensor
+	if((*input1).size == (*input2).size)
 	{
-		public:
-			/*
-			* 	tensor(char *path, char *var) creates array from file with path
-			*	tensor(double * data, size_t *shape, size_t size, size_t size) creates array from designated C/C++ array on CPU or GPU
-			*/
-			~tensor();
-			/*
-			* 	get_size will return
-			*/
-			//virtual int get_size();
-			//virtual size_t* get_shape();
-			//virtual size_t get_dims();
-			//virtual int get_shape(size_t*);
-			template <class T>
-			bool check(T *);
-			size_t size{1};
-			size_t dims;
-			size_t *shape;
-			double *data;
-			enum DEVICE dtype;
-	};
-
-
-	namespace cpu
-	{
-		/* 	io::cpu::tensor will inherit from io::tensor, and will implement 
-		*	tensor to_gpu()
-		*/
-		class tensor : public io::tensor 
-		{
-			public:
-				tensor():io::tensor(){
-					this->dtype=CPU;
-				}
-				tensor(char*, char *);
-				tensor(double *, size_t *, size_t, size_t);
-				double *get_data();
-		};
+		return true;
 	}
-
-	namespace cuda
-	{
-		/* 	io::gpu::tensor will inherit from io::tensor, and will implement 
-		*	tensor to_cpu()
-		*/
-		class tensor : public io::tensor 
-		{
-			public:
-				tensor():io::tensor(){
-					this->dtype=CPU;
-				}
-				tensor(char*, char *);
-				tensor(double *, size_t *, size_t, size_t);
-				double *get_data();
-
-		};
-
-	}	
-
-	io::cpu::tensor cpu_to_cuda(io::cpu::tensor input)
-	{
-
-		double *data_cuda;
-		data_cuda = (double *) std::malloc(input.size * sizeof(double));
-		std::memcpy(data_cuda, input.data, input.size * sizeof(double));
-		free(input.data);
-		cudaMalloc(&(input.data), input.size * sizeof(double));
-		cudaMemcpy(input.data, data_cuda, input.size * sizeof(double), cudaMemcpyHostToDevice);
-		free(data_cuda);
-		input.dtype = CUDA;
-	
-	}
-
-	io::cuda::tensor cuda_to_cpu(io::cuda::tensor input)
-	{
-		double *data_cpu;
-		data_cpu = (double *) std::malloc(input.size * sizeof(double));
-		cudaMemcpy(data_cpu, input.data, input.size * sizeof(double), cudaMemcpyDeviceToHost);
-		cudaFree(input.data);
-		input.data = (double *) std::malloc(input.size * sizeof(double));
-		std::memcpy(input.data, data_cpu, input.size * sizeof(double));	
-		input.dtype = CPU;
-	}
-
-	template <class T>
-	T one()
-	{
-		;
-	};
-
-	template <class T>
-	T zeros()
-	{
-		;
-	};
-
-	template <class T, class C>
-	io::cuda::tensor operator+(T, C);
-
-	template <class T, class C>
-	io::cuda::tensor operator-(T, C);
-		
-	template <class T, class C>
-	io::cuda::tensor operator*(T, C);
-
-	template <class T, class C>
-	io::cuda::tensor operator/(T, C);
-
-	template <class T, class C>
-	io::cpu::tensor operator+(T, C);
-
-	template <class T, class C>
-	io::cpu::tensor operator-(T, C);
-		
-	template <class T, class C>
-	io::cpu::tensor operator*(T, C);
-
-	template <class T, class C>
-	io::cpu::tensor operator/(T, C);
-
-	template <class T>
-	T sin(T);
-
-
-	template <class T>
-	T cos(T);
-
+	return false;
 }
-
-
 
 io::cpu::tensor::tensor(char *filepath, char *varname)
 {	
-	nc_get_size(&size, &dims, filepath, varname);
+	data::get_size(&size, &dims, filepath, varname);
 	data = (double *) std::malloc(size * sizeof(double));
 	shape = (size_t *) std::malloc(dims * sizeof(size_t));
-	nc_read_data(data, shape, filepath, varname);
+	data::read(data, shape, filepath, varname);
 
 }
 
@@ -520,11 +393,11 @@ broadcast
 	return EXIT_SUCCESS;
 }
 
-
+template <class T=io::cuda::tensor, class C=io::cuda::tensor>
 io::cuda::tensor 
-io::operator+(io::cuda::tensor base, io::cuda::tensor element)
+io::operator+(T base, C element)
 {
-    if(check(&element))
+    if(io::check(&base, &element))
     {
         // Check funciton runs a size and shape check
         double *result_data;
@@ -605,7 +478,7 @@ io::operator+(T element, C base)
 io::cuda::tensor 
 io::operator-(io::cuda::tensor base, io::cuda::tensor element)
 {
-    if(check(&element))
+    if(io::check(&base, &element))
     {
         // Check funciton runs a size and shape check
         double *result_data;
@@ -683,7 +556,7 @@ io::operator-(T element, C base)
 io::cuda::tensor 
 io::operator*(io::cuda::tensor base, io::cuda::tensor element)
 {
-    if(check(&element))
+    if(io::check(&base, &element))
     {
         // Check funciton runs a size and shape check
         double *result_data;
@@ -762,7 +635,7 @@ io::operator*(T element, C base)
 io::cuda::tensor 
 io::operator/(io::cuda::tensor base, io::cuda::tensor element)
 {
-    if(check(&element))
+    if(io::check(&base, &element))
     {
         // Check funciton runs a size and shape check
         double *result_data;
@@ -838,7 +711,7 @@ io::operator/(T element, C base)
 }
 
 
-
+/*
 // 完成中央差分的基础函数
 __global__ void bias_i(double *input, double *output, int width, int height, int i)
 {
@@ -871,6 +744,7 @@ tensor bias(tensor base, int i, int j)
 	/*
 	* 该函数只针对2d数组进行定义，但是不检查数组形状
 	*/
+/*
 	double *result;
 	double *gresult_i;
 	double *gresult_j;
@@ -900,7 +774,7 @@ tensor bias(tensor base, int i, int j)
 	free(result);
 	return output;
 }
-
+*/
 
 
 typedef double (*FP1var)(double);
@@ -908,21 +782,6 @@ __device__ double dsin(double x) {return sin(x);}
 __device__ double dcos(double x) {return cos(x);}
 __device__ FP1var fp_sin = dsin;
 __device__ FP1var fp_cos = dcos;
-
-
-/*
-*	
-int 
-broadcast
-(
-	double *input, 
-	double *result, 
-	size_t dims, 
-	size_t size,
-	size_t* shape,
-	double (*func)(double)
-)
-*/
 
 template <class T=io::cuda::tensor>
 T sin(T _this)
