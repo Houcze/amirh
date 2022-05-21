@@ -99,7 +99,7 @@ namespace io
 	{
 
 		double *data;
-		cudaMalloc(&data, (input.size) * sizeof(double));
+		cudaMalloc((void **)&data, (input.size) * sizeof(double));
 		std::cout << (input.size) * sizeof(double) << std::endl;
 		cudaMemcpy(data, input.data, (input.size) * sizeof(double), cudaMemcpyHostToDevice);
 		
