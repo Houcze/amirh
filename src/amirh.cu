@@ -120,7 +120,8 @@ int main(int argc, char* argv[])
 
 
 	io::cuda::tensor w = c + e;
-	std::cout << w.data[0] << std::endl;
+	io::cpu::tensor w2 = io::cuda_to_cpu(w);
+	std::cout << w2.data[0] << std::endl;
 	std::cout << "No problem" << std::endl;
 
 }
