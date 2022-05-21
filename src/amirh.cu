@@ -114,8 +114,8 @@ int main(int argc, char* argv[])
 	io::cpu::tensor b(argv[1], argv[2]);
 	io::cuda::tensor c = io::cpu_to_cuda(a);
 	io::cpu::tensor a2 = io::cuda_to_cpu(c);
-	/*
 	std::cout << c.data[0] << std::endl;
+	/*
 
 
 	io::cuda::tensor e = io::cpu_to_cuda(b);
