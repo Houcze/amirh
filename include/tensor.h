@@ -99,10 +99,10 @@ namespace io
 	{
 
 		double *data;
-		cudaMalloc(&data, input.size * sizeof(double));
-		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
+		cudaMalloc(&data, (input.size) * sizeof(double));
+		cudaMemcpy(data, input.data, (input.size) * sizeof(double), cudaMemcpyHostToDevice);
 		double *data2;
-		cudaMalloc(&data2, input.size * sizeof(double));
+		cudaMalloc(&data2, (input.size) * sizeof(double));
 		cudaMemcpy(data2, data, input.size * sizeof(double), cudaMemcpyDeviceToHost);	
 		std::cout << "DAA " << data2[0] << '\n';
 		io::cuda::tensor result(data, input.shape, input.size, input.dims);
