@@ -207,11 +207,11 @@ bool io::check(T *input1, T *input2)
 }
 
 io::cpu::tensor::~tensor(){
-	free(data);
+	;
 }
 
 io::cuda::tensor::~tensor(){
-	cudaFree(data);
+	;
 }
 
 io::cpu::tensor::tensor(char *filepath, char *varname)
