@@ -85,20 +85,6 @@ namespace io
 
 	}	
 
-	io::cuda::tensor cpu_to_cuda(io::cpu::tensor input)
-	{
-
-		double *data;
-		cudaMalloc(&data, input.size * sizeof(double));
-		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
-		io::cuda::tensor result(data, input.shape, input.size, input.dims);
-		io::cpu::tensor b=io::cuda_to_cpu(result);
-		std::cout << b.data[0] << std::endl;
-		cudaFree(data);
-		return result;
-	
-	}
-
 	io::cpu::tensor cuda_to_cpu(io::cuda::tensor input)
 	{
 		double *data;
@@ -108,6 +94,21 @@ namespace io
 		free(data);
 		return result;
 	}
+
+	io::cuda::tensor cpu_to_cuda(io::cpu::tensor input)
+	{
+
+		double *data;
+		cudaMalloc(&data, input.size * sizeof(double));
+		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
+		io::cuda::tensor result(data, input.shape, input.size, input.dims);
+		io::cpu::tensor b = io::cuda_to_cpu(result);
+		std::cout << b.data[0] << std::endl;
+		cudaFree(data);
+		return result;
+	
+	}
+
 
 	template <class T>
 	T one()
