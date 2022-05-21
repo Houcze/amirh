@@ -495,8 +495,8 @@ broadcast
 					double *input2_gpu;
 					cudaMalloc(&input2_gpu, sizeof(double));
 					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
-					kernel(input1, input2_gpu, result, d1, func);
-					cudaFree(&input2_gpu);
+					kernel(input1, input2_gpu[0], result, d1, func);
+					cudaFree(input2_gpu);
 				}
 				else
 				{
@@ -512,8 +512,8 @@ broadcast
 					double *input2_gpu;
 					cudaMalloc(&input2_gpu, sizeof(double));
 					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
-					kernel(input1, input2_gpu, result, d1, d2, func);
-					cudaFree(&input2_gpu);
+					kernel(input1, input2_gpu[0], result, d1, d2, func);
+					cudaFree(input2_gpu);
 				}
 				else
 				{
@@ -530,8 +530,8 @@ broadcast
 					double *input2_gpu;
 					cudaMalloc(&input2_gpu, sizeof(double));
 					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
-					kernel(input1, input2_gpu, result, d1, d2, d3, func);
-					cudaFree(&input2_gpu);
+					kernel(input1, input2_gpu[0], result, d1, d2, d3, func);
+					cudaFree(input2_gpu);
 				}
 				else
 				{
