@@ -116,6 +116,7 @@ int main(int argc, char* argv[])
 	
 	io::cuda::tensor c = io::cpu_to_cuda(a);
 	io::cpu::tensor a2 = io::cuda_to_cpu(c);
+	io::cuda::tensor e = io::cpu_to_cuda(a);
 
 
 	io::cuda::tensor w = c + e;
