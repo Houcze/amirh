@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include <time.h>
 #define d 1
 #define dx 1
 #define dy 1
@@ -118,9 +119,13 @@ int main(int argc, char* argv[])
 	io::cpu::tensor a2 = io::cuda_to_cpu(c);
 	io::cuda::tensor e = io::cpu_to_cuda(a);
 
-
+	clock_t start,end;
+	start = clock();
 	io::cuda::tensor w = c + e;
 	io::cpu::tensor w2 = io::cuda_to_cpu(w);
+	end = clock();
+	std::cout<<"time = "<<double(end-start)/CLOCKS_PER_SEC<<"s"<<std::endl;  //输出时间（单位：ｓ）
+
 	std::cout << w2.data[0] << std::endl;
 
 }
