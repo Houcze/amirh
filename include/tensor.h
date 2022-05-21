@@ -92,7 +92,7 @@ namespace io
 		cudaMalloc(&data, input.size * sizeof(double));
 		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
 		io::cuda::tensor result(data, input.shape, input.size, input.dims);
-		// cudaFree(data);
+		cudaFree(data);
 		return result;
 	
 	}
@@ -103,7 +103,7 @@ namespace io
 		data = (double *) std::malloc(input.size * sizeof(double));
 		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyDeviceToHost);
 		io::cpu::tensor result(data, input.shape, input.size, input.dims);
-		// free(data);
+		free(data);
 		return result;
 	}
 
