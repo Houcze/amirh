@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 	clock_t start,end;
 
 	start = clock();
-	io::cuda::tensor w = e * c;
+	io::cuda::tensor w = 100 * c;
 	end = clock();
 	io::cpu::tensor w2 = io::cuda_to_cpu(w);
 
