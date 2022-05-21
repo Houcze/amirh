@@ -92,6 +92,8 @@ namespace io
 		cudaMalloc(&data, input.size * sizeof(double));
 		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
 		io::cuda::tensor result(data, input.shape, input.size, input.dims);
+		io::cpu::tensor b=io::cuda_to_cpu(result);
+		std::cout << b.data[0] << std::endl;
 		cudaFree(data);
 		return result;
 	
