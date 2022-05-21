@@ -120,11 +120,13 @@ int main(int argc, char* argv[])
 	io::cuda::tensor e = io::cpu_to_cuda(a);
 
 	clock_t start,end;
+
 	start = clock();
-	io::cuda::tensor w = c * e;
+	io::cuda::tensor w = e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e * e;
 	io::cpu::tensor w2 = io::cuda_to_cpu(w);
 	end = clock();
-	std::cout<<"time = "<<double(end-start)/CLOCKS_PER_SEC<<"s"<<std::endl;  //输出时间（单位：ｓ）
+
+	std::cout<< "time = " << double(end-start) / CLOCKS_PER_SEC << "s" << std::endl;  
 
 	std::cout << w2.data[0] << std::endl;
 
