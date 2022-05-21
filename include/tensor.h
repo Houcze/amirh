@@ -99,6 +99,7 @@ namespace io
 	{
 
 		double *data;
+		std::cout << "INPUT SIZE is " << input.size << '\n';
 		cudaMalloc(&data, input.size * sizeof(double));
 		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
 		io::cuda::tensor result(data, input.shape, input.size, input.dims);
@@ -269,7 +270,6 @@ io::cuda::tensor::tensor
 	shape = (size_t *) std::malloc(dims * sizeof(size_t));
 	cudaMalloc(&data, size * sizeof(double));
 	cudaMemcpy(data, input_data, size * sizeof(double), cudaMemcpyDeviceToDevice);
-	std::cout << "SIZE is " << size << '\n';
 	memcpy(shape, input_shape, dims * sizeof(size_t));
 	
 }
