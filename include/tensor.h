@@ -99,7 +99,12 @@ namespace io
 	{
 
 		double *data;
-		cudaMalloc((void **)&data, (input.size) * sizeof(double));
+		cudaMalloc(&data, (input.size) * sizeof(double));
+		cudaError_t error = cudaGetLastError(); 
+		if(error!=cudaSuccess)
+		{ 
+			fprintf(stderr,"ERROR: %s\n", cudaGetErrorString(error));
+		}
 		std::cout << (input.size) * sizeof(double) << std::endl;
 		cudaMemcpy(data, input.data, (input.size) * sizeof(double), cudaMemcpyHostToDevice);
 		
