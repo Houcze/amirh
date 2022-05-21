@@ -414,26 +414,12 @@ kernel(double *input1, double *input2, double *result, size_t d1, double (*func)
 }
 
 
-int
-kernel(double *input1, double input2, double *result, size_t d1, size_t d2, double (*func)(double, double))
-{
-	_2da<<<dim3((d1 + threadsPerBlock - 1) / threadsPerBlock, (d2 + threadsPerBlock - 1) / threadsPerBlock), dim3(threadsPerBlock, threadsPerBlock)>>>(input1, input2, result, d1, d2, func);
-	cudaDeviceSynchronize();		
-}
-
 
 int
 kernel(double *input1, double *input2, double *result, size_t d1, size_t d2, double (*func)(double, double))
 {
 	_2da<<<dim3((d1 + threadsPerBlock - 1) / threadsPerBlock, (d2 + threadsPerBlock - 1) / threadsPerBlock), dim3(threadsPerBlock, threadsPerBlock)>>>(input1, input2, result, d1, d2, func);
 	cudaDeviceSynchronize();		
-}
-
-int 
-kernel(double *input1, double input2, double *result, size_t d1, size_t d2, size_t d3, double (*func)(double, double))
-{
-	_3da<<<dim3((d1 + threadsPerBlock - 1) / threadsPerBlock, (d2 + threadsPerBlock - 1) / threadsPerBlock,(d3 + threadsPerBlock - 1) / threadsPerBlock), dim3(threadsPerBlock, threadsPerBlock, threadsPerBlock)>>>(input1, input2, result, d1, d2, d3, func);
-	cudaDeviceSynchronize();	
 }
 
 
@@ -502,7 +488,7 @@ broadcast
 					double *input2_gpu;
 					cudaMalloc(&input2_gpu, sizeof(double));
 					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
-					kernel(input1, input2_gpu[0], result, d1, func);
+					kernel(input1, input2_gpu, result, d1, func);
 					cudaFree(input2_gpu);
 				}
 				else
@@ -538,7 +524,7 @@ broadcast
 					double *input2_gpu;
 					cudaMalloc(&input2_gpu, sizeof(double));
 					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
-					kernel(input1, input2_gpu[0], result, d1, d2, d3, func);
+					kernel(input1, input2_gpu, result, d1, d2, d3, func);
 					cudaFree(input2_gpu);
 				}
 				else
