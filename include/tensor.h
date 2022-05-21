@@ -99,9 +99,11 @@ namespace io
 	{
 
 		double *data;
-		std::cout << "INPUT data is " << input.data[0] << '\n';
 		cudaMalloc(&data, input.size * sizeof(double));
 		cudaMemcpy(data, input.data, input.size * sizeof(double), cudaMemcpyHostToDevice);
+		double *data2;
+		cudaMalloc(&data2, input.size * sizeof(double));
+		cudaMemcpy(data2, data, input.size * sizeof(double), cudaMemcpyDeviceToHost);	
 		io::cuda::tensor result(data, input.shape, input.size, input.dims);
 		io::cpu::tensor b = io::cuda_to_cpu(result);
 		std::cout << b.data[0] << std::endl;
