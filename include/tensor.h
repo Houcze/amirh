@@ -602,12 +602,7 @@ io::operator+(io::cuda::tensor base, io::cuda::tensor element)
 		cudaMemcpyFromSymbol(&fp_h, fp_add, sizeof(FP));
         broadcast(base.data, element.data, result_data, base.dims, base.size, base.shape, 0, fp_h);
 		io::cuda::tensor result(result_data, base.shape, base.size, base.dims);
-		io::cpu::tensor a = io::cuda_to_cpu(result);
-		io::cuda::tensor b = io::cpu_to_cuda(a);
-		io::cpu::tensor c = io::cuda_to_cpu(b);
 		cudaFree(result_data);
-		std::cout << "+ check " << a.data[0] << '\t' << a.data[1] << std::endl;
-		std::cout << "+ check " << c.data[0] << '\t' << c.data[1] << std::endl;
 		return result;
     }
 	else
