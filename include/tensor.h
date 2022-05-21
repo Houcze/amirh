@@ -269,6 +269,7 @@ io::cuda::tensor::tensor
 	shape = (size_t *) std::malloc(dims * sizeof(size_t));
 	cudaMalloc(&data, size * sizeof(double));
 	cudaMemcpy(data, input_data, size * sizeof(double), cudaMemcpyDeviceToDevice);
+	std::cout << "SIZE is " << size << '\n';
 	memcpy(shape, input_shape, dims * sizeof(size_t));
 	
 }
