@@ -1,0 +1,1 @@
+export LD_LIBRARY_PATH=/mnt/c/Users/hougreat/Documents/GitHub/amirh/lib64:$LD_LIBRARY_PATH

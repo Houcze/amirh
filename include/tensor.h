@@ -499,11 +499,8 @@ broadcast
 			{
 				if (is_constant)
 				{
-					double *input2_gpu;
-					cudaMalloc(&input2_gpu, sizeof(double));
-					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
+					__global__ double input2_gpu = *input2;
 					kernel(input1, input2_gpu, result, d1, func);
-					cudaFree(input2_gpu);
 				}
 				else
 				{
@@ -516,12 +513,10 @@ broadcast
 				d2 = shape[1];
 				if (is_constant)
 				{
-					double *input2_gpu;
-					cudaMalloc(&input2_gpu, sizeof(double));
-					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
+					__global__ double input2_gpu = *input2;
 
-					kernel(input1, *input2_gpu, result, d1, d2, func);
-					cudaFree(input2_gpu);
+					kernel(input1, input2_gpu, result, d1, d2, func);
+
 				}
 				else
 				{
@@ -535,11 +530,8 @@ broadcast
 				d3 = shape[2];
 				if (is_constant)
 				{
-					double *input2_gpu;
-					cudaMalloc(&input2_gpu, sizeof(double));
-					cudaMemcpy(input2_gpu, input2, sizeof(double), cudaMemcpyHostToDevice);
+					__global__ double input2_gpu = *input2;
 					kernel(input1, input2_gpu, result, d1, d2, d3, func);
-					cudaFree(input2_gpu);
 				}
 				else
 				{
