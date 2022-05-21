@@ -99,8 +99,8 @@ namespace io
 	{
 
 		double *data;
-		std::cout << "DAA " << std::endl;
 		cudaMalloc(&data, (input.size) * sizeof(double));
+		std::cout << (input.size) * sizeof(double) << std::endl;
 		cudaMemcpy(data, input.data, (input.size) * sizeof(double), cudaMemcpyHostToDevice);
 		
 		double *data2;
