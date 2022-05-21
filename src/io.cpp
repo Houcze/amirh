@@ -78,6 +78,6 @@ int netcdf::read(double *result, size_t *shape, char* filepath, char* varname)
     nc_get_var_double(ncid, varid, result);
     std::cout << "Success Load " << varname << '\n';
     status = nc_close(ncid);
-    memcpy(shape, dims, sizeof(dims));
+    memcpy(shape, dims, varndims * sizeof(size_t));
     return EXIT_SUCCESS;
 }

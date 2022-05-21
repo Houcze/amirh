@@ -112,17 +112,14 @@ int main(int argc, char* argv[])
 {
 	io::cpu::tensor a(argv[1], argv[2]);
 	io::cpu::tensor b(argv[1], argv[2]);
-	std::cout << "1" << a.data[0] << std::endl;
-	std::cout << "2" << b.data[0] << std::endl;
 
 	io::cuda::tensor c = io::cpu_to_cuda(a);
 	io::cpu::tensor a2 = io::cuda_to_cpu(c);
-	std::cout << "3" << a2.data[0] << std::endl;
+
 
 
 	io::cuda::tensor e = io::cpu_to_cuda(b);
 	io::cuda::tensor w = c + e;
-	io::cpu::tensor w2 = io::cuda_to_cpu(w);
-	std::cout << w2.data[0] << std::endl;
+	std::cout << w.data[0] << std::endl;
 	std::cout << "No problem" << std::endl;
 }
