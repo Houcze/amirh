@@ -227,7 +227,7 @@ io::cpu::tensor::tensor(char *filepath, char *varname)
 	data = (double *) std::malloc(size * sizeof(double));
 	shape = (size_t *) std::malloc(dims * sizeof(size_t));
 	data::read(data, shape, filepath, varname);
-	std::cout << shape[0] << '\t' << shape[1] << '\t' << shape[2] << std::endl;
+
 
 }
 
