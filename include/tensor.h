@@ -56,12 +56,14 @@ namespace io
 				tensor():io::tensor(){
 					this->dtype=CPU;
 				}
+		
 				tensor(char*, char *);
 				tensor(double *, size_t *, size_t, size_t);
 				double *get_data();
 				~tensor();
 
 		};
+		tensor linspace(size_t, size_t, size_t);
 	}
 
 	namespace cuda
@@ -113,17 +115,40 @@ namespace io
 	
 	}
 
-
-	template <class T>
-	T one()
+	template <size_t _Size>
+	io::cpu::tensor one(size_t (&shape)[_Size])
 	{
-		;
+		size_t dims = _Size;
+		size_t size{1};
+		for(int i=0; i<dims; i++)
+		{
+			size *= shape[i];
+		}
+		double *data;
+		data = (double *) std::malloc(size * sizeof(size_t));
+		for(int i=0; i<size; i++)
+		{
+			data[i] = 1.;
+		}
+		return io::cpu::tensor(data, shape, size, dims);
 	};
 
-	template <class T>
-	T zeros()
+	template <size_t _Size>
+	io::cpu::tensor zeros(size_t (&shape)[_Size])
 	{
-		;
+		size_t dims = _Size;
+		size_t size{1};
+		for(int i=0; i<dims; i++)
+		{
+			size *= shape[i];
+		}
+		double *data;
+		data = (double *) std::malloc(size * sizeof(size_t));
+		for(int i=0; i<size; i++)
+		{
+			data[i] = 0.;
+		}
+		return io::cpu::tensor(data, shape, size, dims);
 	};
 
     template <class T>
@@ -246,6 +271,19 @@ io::cpu::tensor::tensor
 	memcpy(data, input_data, size * sizeof(double));
 	memcpy(shape, input_shape, dims * sizeof(size_t));
 	
+}
+
+io::cpu::tensor io::cpu::linspace(size_t start, size_t end, size_t points)
+{
+	double *data;
+	data = (double *) std::malloc(points * sizeof(double));
+	double step = double(end - start) / double(points - 2);
+	for(int i=0; i<points; i++)
+	{
+		data[i] = start + i * step;
+	}
+	size_t shape[2] = {1, points};
+	return io::cpu::tensor(data, shape, points, 2);
 }
 
 io::cuda::tensor::tensor(char *filepath, char *varname)

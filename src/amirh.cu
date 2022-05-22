@@ -118,6 +118,7 @@ int main(int argc, char* argv[])
 	io::cuda::tensor c = io::cpu_to_cuda(a);
 	io::cpu::tensor a2 = io::cuda_to_cpu(c);
 	io::cuda::tensor e = io::cpu_to_cuda(a);
+	io::cuda::tensor r = io::cpu_to_cuda(a);
 
 	clock_t start,end;
 
@@ -129,5 +130,7 @@ int main(int argc, char* argv[])
 	std::cout<< "time = " << double(end-start) / CLOCKS_PER_SEC << "s" << std::endl;  
 
 	std::cout << w2.data[0] << std::endl;
+	
+	J(&c, &e, &r);
 
 }
