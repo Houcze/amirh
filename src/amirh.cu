@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 	std::cout<< "time = " << double(end-start) / CLOCKS_PER_SEC << "s" << std::endl;  
 
 	std::cout << w2.data[0] << std::endl;
-	
 	J(&c, &e, &r);
-
+	io::cpu::tensor R = io::cuda_to_cpu(r);
+	std::cout << R.data[0] << std::endl;
 }

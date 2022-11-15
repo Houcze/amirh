@@ -1,5 +1,5 @@
-build/amirh.exe: src/* lib64/*
-	nvcc src/amirh.cu -o build/amirh.exe -I./include -L./lib64 -lnetcdf -lio
+build/amirh.exe: src/* modules/*
+	nvcc src/amirh.cu -o build/amirh.exe -I./include -L./modules -lnetcdf -lio
 clean:	
 	rm build/amirh.exe
 run:

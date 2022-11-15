@@ -79,6 +79,7 @@ namespace io
 				}
 				tensor(char*, char *);
 				tensor(double *, size_t *, size_t, size_t);
+				tensor(tensor &&);
 				~tensor();
 
 
@@ -151,8 +152,23 @@ namespace io
 		return io::cpu::tensor(data, shape, size, dims);
 	};
 
+	double sum(io::cuda::tensor input)
+	{
+		double result{0.};
+		int parity{(input.size) % 2};
+		switch(parity){
+			case 0:{
+				break;
+			}
+			case 1:{
+				;
+			}
+		}
+		return result;
+	}
+
     template <class T>
-    bool check(T *input1, T *input2);
+    bool check(T *inputX, T *inputY);
 
 	template <class C>
 	io::cuda::tensor operator+(io::cuda::tensor, C);
@@ -238,12 +254,14 @@ bool io::check(T *input1, T *input2)
 	return false;
 }
 
+
 io::cpu::tensor::~tensor(){
-	;
+	free(data);
 }
 
+
 io::cuda::tensor::~tensor(){
-	;
+	cudaFree(data);
 }
 
 io::cpu::tensor::tensor(char *filepath, char *varname)
@@ -252,8 +270,6 @@ io::cpu::tensor::tensor(char *filepath, char *varname)
 	data = (double *) std::malloc(size * sizeof(double));
 	shape = (size_t *) std::malloc(dims * sizeof(size_t));
 	data::read(data, shape, filepath, varname);
-
-
 }
 
 io::cpu::tensor::tensor
@@ -314,6 +330,23 @@ io::cuda::tensor::tensor
 	memcpy(shape, input_shape, dims * sizeof(size_t));
 	
 }
+
+
+io::cuda::tensor::tensor(io::cuda::tensor &&input)
+{
+	/*
+	size = (&&input).size;
+	dims = (&&input).dims;
+	cudaMalloc(&data, size * sizeof(double));
+	cudaMemcpy(data, (&&input).data, size * sizeof(double), cudaMemcpyDeviceToDevice);
+
+	shape = (size_t *) std::malloc(dims * sizeof(size_t));	
+	shape = (&&input).shape;
+	*/
+	(&&input).data = NAN;
+	
+}
+
 
 __device__ double __add__(double x, double y)
 {
