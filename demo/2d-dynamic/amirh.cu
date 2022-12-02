@@ -267,7 +267,7 @@ int Jmp1(double *A, double *B, double *output, int N1, int N2)
     parti_diff(A, A1, N1, N2, 0, 1);
     parti_diff(A, A3, N1, N2, 0, -1);
     parti_diff(A, A2, N1, N2, -1, 0);
-    parti_diff(A, A4, N1, N2, -1, 0);
+    parti_diff(A, A4, N1, N2, 1, 0);
 
 
     mul(result1, A1, result1, N1, N2);

@@ -12,21 +12,22 @@
 \renewcommand{\baselinestretch}{1.0}
 \setlength{\baselineskip}{22pt}
 \setmainfont{Source Code Pro}
-\geometry{a4paper, scale=0.8}
+\geometry{a4paper, left=2cm, right=2cm, top=1cm, bottom=1cm}
 
 \title{AMIRH Document}
 \author{HOU Chengze}
 \date{2022}
-\begin{document} 
+\begin{document}
+\begin{sloppypar}
 \maketitle
-The AMIRH project aims to reproduce the complex atmospheric phenomena in the atmosphere of terrestrial planets. 
-It considers the radiation from the universe and the properties of the planet itself. 
-This model does not take a specific planet as the hypothetical object. I look forward to exploring the relationship between the atmosphere and the planet. 
+The AMIRH project aims to reproduce the complex atmospheric phenomena in the atmosphere of terrestrial planets.
+It considers the radiation from the universe and the properties of the planet itself.
+This model does not take a specific planet as the hypothetical object. I look forward to exploring the relationship between the atmosphere and the planet.
 With the powerful computing power provided by the GPU, the model can support a very detailed resolution.
 
 \section{Where I start}
-The original idea for this project came from the barotropic atmospheric model proposed by Chung-Ying Hu in 1975. 
-His model is based on,\newline
+The original idea for this project came from the barotropic atmospheric model
+proposed by Chung-Ying Hu in 1975. His model is based on,\newline
 \begin{itemize}
     \item [*] Equation of motion
     \item [*] Equation of continuity
@@ -43,18 +44,10 @@ The master equation is,
 \begin{equation}
     \frac{\partial}{\partial{t}}\nabla^{2}z=J(f+\zeta, z)
 \end{equation}
-$z$ is the air pressure at the isobaric surface, $f$ is Coriolis parameter, $J(A, B)=\frac{\partial A}{x}\frac{\partial B}{y}-\frac{\partial A}{y}\frac{\partial B}{x}$.
-By applying the finite difference and the relaxation method:\newline
+$z$ is the air pressure at the isobaric surface, $f$ is Coriolis parameter, $J(A, B)=\frac{\partial A}{x}\frac{\partial B}{y}-\frac{\partial A}{y}\frac{\partial B}{x}$. By applying the finite difference and the relaxation
+method:\newline
 \begin{equation}
-    (\frac{\partial{z}}{\partial{t}})^{n+1}_{i,j}
-    =-\frac{1}{4}
-        [
-            (\frac{\partial{z}}{\partial{t}})_{i+1,j}+
-            (\frac{\partial{z}}{\partial{t}})_{i-1,j}+
-            (\frac{\partial{z}}{\partial{t}})_{i,j+1}+
-            (\frac{\partial{z}}{\partial{t}})_{i,j-1}-
-            \frac{d^2}{m^2}J(f+\zeta, z)_{i,j}
-        ]^n
+    (\frac{\partial{z}}{\partial{t}})^{n+1}_{i,j} =-\frac{1}{4} [ (\frac{\partial{z}}{\partial{t}})_{i+1,j}+ (\frac{\partial{z}}{\partial{t}})_{i-1,j}+ (\frac{\partial{z}}{\partial{t}})_{i,j+1}+ (\frac{\partial{z}}{\partial{t}})_{i,j-1}- \frac{d^2}{m^2}J(f+\zeta, z)_{i,j} ]^n
 \end{equation}
 \noindent Repeatedly calculate (2) until,\newline
 \begin{equation}
@@ -65,15 +58,14 @@ when $t>0$ by applying the Center-difference method:
 
 \begin{equation}
     \begin{cases}
-        z^{t+\Delta{t}}_{i,j}=z^{t}_{i,j}+\Delta{t}(\frac{\partial{z}}{\partial{t}})^{t}_{i,j}& t=0 \\
-        z^{t+\Delta{t}}_{i,j}=z^{t-\Delta{t}}_{i,j}+2\Delta{t}(\frac{\partial{z}}{\partial{t}})^{t}_{i,j}& t>0 \\
+        z^{t+\Delta{t}}_{i,j}=z^{t}_{i,j}+\Delta{t}(\frac{\partial{z}}{\partial{t}})^{t}_{i,j}            & t=0 \\
+        z^{t+\Delta{t}}_{i,j}=z^{t-\Delta{t}}_{i,j}+2\Delta{t}(\frac{\partial{z}}{\partial{t}})^{t}_{i,j} & t>0 \\
     \end{cases}
 \end{equation}
 The boundary condition is Free slip boundary condition, which assumes that the atmosphere can flow freely at the boundary without being affected by frictional resistance, \newline
 \begin{equation}
     \begin{cases}
-        \frac{\partial v}{\partial x}=0 \\
-        \frac{\partial u}{\partial y}=0 \\
+        \frac{\partial v}{\partial x}=0 \\ \frac{\partial u}{\partial y}=0 \\
     \end{cases}
 \end{equation}
 Whihc could be expressed as, \newline
@@ -85,8 +77,8 @@ The $J$ above is solved by 12-points approximation, Fig.1 is the corresponding c
 
 \begin{figure*}
     \centering
-    \includegraphics[scale=0.45]{./imgs/wiki/12-points-fd.png}
-    \caption{computation domain and grid system}     
+    \includegraphics[scale=0.45]{../imgs/wiki/12-points-fd.png}
+    \caption{computation domain and grid system}
     \label{fig:1}
 \end{figure*}
 The law of conservation of energy is verified.
@@ -123,28 +115,29 @@ Here $A_i, B_i (i=1,......12)$ is the corresponding value of A, B at $i$-th poin
 As for the 3D model, the motion equations are,
 \begin{equation}
     \begin{cases}
-        \frac{du}{dt}=\frac{uv\tan\phi}{r}-\frac{uw}{r}-\frac{1}{\rho}\frac{\partial p}{r\cos\phi\partial\lambda}+fv-\hat{f}\omega+F_{\lambda}\frac{d}{dt}+\frac{u^2}{\tan\phi}{r} \\
-        \frac{dv}{dt}=-\frac{u^2\tan\phi}{r}-\frac{vw}{r}-\frac{1}{\rho}\frac{\partial p}{r\partial \phi}-fu+F_{\phi} \\    
-        \frac{d\omega}{dt}=\frac{u^2+v^2}{r}-\frac{1}{\rho}\frac{\partial p}{\partial r}-g+\hat{f}u+F_r\\
+        \frac{du}{dt}=\frac{uv\tan\phi}{r}-\frac{uw}{r}-\frac{1}{\rho}\frac{\partial p}{r\cos\phi\partial\lambda}+fv-\hat{f}\omega+F_{\lambda}\frac{d}{dt}+\frac{u^2}{\tan\phi}{r}
+        \\ \frac{dv}{dt}=-\frac{u^2\tan\phi}{r}-\frac{vw}{r}-\frac{1}{\rho}\frac{\partial p}{r\partial \phi}-fu+F_{\phi} \\
+        \frac{d\omega}{dt}=\frac{u^2+v^2}{r}-\frac{1}{\rho}\frac{\partial p}{\partial r}-g+\hat{f}u+F_r \\
     \end{cases}
 \end{equation}
 \subsection{sigma vertial coordinate}
-A vertical coordinate for atmospheric models defined as pressure normalized by its surface value, or as the difference in pressure and its value at the top
-of the model atmosphere normalized by the surface value of this difference. \newline
-Thus,
+A vertical coordinate for atmospheric models defined as pressure normalized by
+its surface value, or as the difference in pressure and its value at the top of
+the model atmosphere normalized by the surface value of this difference.
+\newline Thus,
 \begin{equation}
     \sigma=\frac{p-p_T}{p_S-p_T}
 \end{equation}
 
 \begin{figure*}
     \centering
-    \includegraphics[scale=0.45]{./imgs/wiki/sigma_diff.JPG}
-    \caption{Before sigma and sigma}     
+    \includegraphics[scale=0.45]{../imgs/wiki/sigma_diff.JPG}
+    \caption{Before sigma and sigma}
     \label{fig:2}
 \end{figure*}
 The difference could be seen in figure 2.
 \subsection{Hybrid sigma}
-The hybrid $\sigma$ coordinate remodified the high pressure level. 
+The hybrid $\sigma$ coordinate remodified the high pressure level.
 \begin{equation}
     p_d=B(\eta)(p_s-p_t)+[\eta-B(\eta)](p_0-p_t)+p_t
 \end{equation}
@@ -157,28 +150,161 @@ $B(\eta)$ is defined by a third order polynomial \newline
 By applying the boundary conditions, there should be,
 \begin{equation}
     \begin{cases}
-        B(1)=1\\
-        B_{\eta}=1\\
-        B(\eta_c)=0\\
-        B_{\eta}(\eta_c)=0\\
+        B(1)=1             \\
+        B_{\eta}=1         \\
+        B(\eta_c)=0        \\
+        B_{\eta}(\eta_c)=0 \\
     \end{cases}
 \end{equation}
 such that,
 \begin{equation}
     \begin{cases}
-        c_1=\frac{2\eta_c^2}{(1-\eta_c)^3}\\
-        c_2=\frac{-\eta_c(4+\eta_c+\eta_c^2)}{(1-\eta_c)^3}\\
-        c_3=\frac{2\eta_c(1+\eta_c+\eta_c^2)}{(1-\eta_c)^3}\\
-        c_4=\frac{-(1+\eta_c)}{(1-\eta_c)^3}\\        
+        c_1=\frac{2\eta_c^2}{(1-\eta_c)^3}                  \\
+        c_2=\frac{-\eta_c(4+\eta_c+\eta_c^2)}{(1-\eta_c)^3} \\
+        c_3=\frac{2\eta_c(1+\eta_c+\eta_c^2)}{(1-\eta_c)^3} \\
+        c_4=\frac{-(1+\eta_c)}{(1-\eta_c)^3}                \\
     \end{cases}
 \end{equation}
 where $\eta_c$ is a specified value of $\eta$ at which it becomes a pure pressure coordinate.
 The difference could be seen in figure 3.
 \begin{figure*}
     \centering
-    \includegraphics[scale=0.45]{./imgs/wiki/hybridsigma.png}
-    \caption{sigma and hybrid sigma}     
+    \includegraphics[scale=0.45]{../imgs/wiki/hybridsigma.png}
+    \caption{sigma and hybrid sigma}
     \label{fig:3}
 \end{figure*}
-What should the $\eta_c$ be for Mars?
+\newline
+What should the $\eta_c$ be for Mars? \newline
+The vertical coordinate metric is defined as
+\begin{equation}
+    \mu_d=\frac{\partial{p_d}}{\partial{\mu}}=B_{\mu}(\mu)(p_s-p_t)+[1-B_{\mu}(\mu)](p_0-p_t)
+\end{equation}
+Since $\mu_d\delta\mu=\delta p_d=-g\rho\delta{z}$ is proportional to the mass per unit area weightin
+a gird cell, the appripirate flux forms for the prognostic variables are defined as
+\begin{equation}
+    \begin{cases}
+        \boldsymbol{{\rm V}}={\mu_d}\boldsymbol{{\rm v}}=(U,V,W)       \\
+        \Omega=\mu_d\omega     \\
+        \Theta_m=\mu_d\theta_m \\
+        Q_m={\mu_d}{q_m}
+    \end{cases}
+\end{equation}
+Here, $\boldsymbol{{\rm v}}=(u,v,\omega)$ are the covariant velocities in the horizontal and vertical directions, while $\omega=\dot{\mu}$ is
+the contravariant `vertical' velocity. $\theta_m=\theta(1+(\frac{R_v}{R_d})q_v)\approx\theta(1+1.61q_v)$ is the moist potential
+temperature and $Q_m=\mu{dq_m}$, where $q_m=q_v$,$q_c$,$q_r$$\ldots$
+represnets the mixing ratio of moisture variables (water vapor, cloud water, rain water,$\ldots$).
+Although the geopotential $\phi=gz$ is also a prognostic variable in the governing equations of the model, it is not written in flux-form 
+as $\mu_d\phi$ is not a conserved quantity.
+
+% 是否需要保留本段
+\subsection{Coupled Algorithm}
+The pressure based solver allows us to solve the problem in either a segregated or coupled manner. Using the coupled approach offers 
+some advantages over the non-coupled or segregated approach. The coupled scheme obtains a robust and efficient single phase implementation
+for steady-state flows, with superior performance compared to the segregated solution schemes. This pressure-based coupled algorithm
+offers an alternative to the density-based and pressure-based segregated algorithm with SIMPLE-type pressure-velocity coupling. For 
+transient flows, using the coupled algorithm is necessary when the quality of the mesh is poor, or if large time steps are used.
+
+The pressure-based segregated algorithm solves the momentum equation and pressure correction equations separately. 
+This semi-implicit solution method results in slow convergence.
+
+\subsection{Flux-Form Euler Equations Under Sphere Coordinate}
+Using the variables defined above, the flux-form Euler equations can be written as 
+%% 1    0                       0
+%% 0    r^2                     0
+%% 0    0                       r^2\sin^2\theta           
+\begin{equation}
+    \begin{split}
+    \partial_t{U}+
+    (\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2Uu)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{Vu})+\frac{1}{r\sin\theta}\frac{\partial{Wu}}{\partial{\psi}})+ \\
+    {\mu_d}\alpha(\sin\theta\cos\psi\frac{\partial{p}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{p}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{p}}{\partial{\psi}})+ \\
+    (\frac{\alpha}{\alpha_d}\partial_{\mu}p(\sin\theta\cos\psi\frac{\partial{\phi}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{\phi}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{\phi}}{\partial{\psi}})) \\
+    =F_{U}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \begin{split}
+    \partial_t{V}+
+    (\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2Uv)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{Vv})+\frac{1}{r\sin\theta}\frac{\partial{Wv}}{\partial{\psi}})+ \\
+    {\mu_d}\alpha(\sin\theta\sin\psi\frac{\partial{p}}{\partial{r}}+\frac{\cos\theta\sin\psi}{r}\frac{\partial{p}}{\partial{\theta}}+\frac{\cos\psi}{r\sin\theta}\frac{\partial{p}}{\partial{\psi}})+ \\
+    (\frac{\alpha}{\alpha_d}\partial_{\mu}p(\sin\theta\cos\psi\frac{\partial{\phi}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{\phi}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{\phi}}{\partial{\psi}})) \\
+    =F_{V}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \begin{split}
+    \partial_t{W}+
+    (\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U\omega)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V\omega})+\frac{1}{r\sin\theta}\frac{\partial{W\omega}}{\partial{\psi}})+ \\
+    -g[\frac{\alpha}{\alpha_{d}}\partial_{\eta}p-\mu_{d}]
+    =F_{W}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \partial_t{\Theta_m}+(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U\theta_m)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V\theta_m})+\frac{1}{r\sin\theta}\frac{\partial{W\theta_m}}{\partial{\psi}})=F_{\Theta_m}
+\end{equation}
+\begin{equation}
+    \partial_t{\mu_d}+(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V})+\frac{1}{r\sin\theta}\frac{\partial{W}}{\partial{\psi}})=0
+\end{equation}
+\begin{equation}
+    \partial_t{\phi}+\mu_d^{-1}[U\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U\phi)+V\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V\phi})+W\frac{1}{r\sin\theta}\frac{\partial{W\phi}}{\partial{\psi}}-gW]=0
+\end{equation}
+\begin{equation}
+    \partial_t{Q_m}+(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2Uq_m)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{Vq_m})+\frac{1}{r\sin\theta}\frac{\partial{Wq_m}}{\partial{\psi}})=F_{Q_m}
+\end{equation}
+with the diagnostic equation for dry hydrostatic pressure\newline
+\begin{equation}
+    \partial_{\eta}\phi=-\alpha_d\mu_d
+\end{equation}
+and the diagnostic relation for the full pressure (dry air plus water vapor)\newline
+\begin{equation}
+    p=p_0(\frac{R_d\theta_m}{p_0\alpha_d})^{\gamma}
+\end{equation}
+In these equations, $\alpha_d$ is the inverse density of the dry air $\frac{1}{\rho_d}$ and $\alpha$ is the inverse density taking into account the full parcel density $\alpha=\alpha_d(1+q_v+q_c+q_r+q_i+\ldots)^{-1}$.
+$\gamma=\frac{c_p}{c_v}=1.4$ is the ratio of the heat capacities for dry air, $R_d$ is the gas constant for dry air, and $p_0$ is a refernce surface pressure (On earth typically $10^5$ Pascals). The right-hand-side (RHS) terms
+$F_U$, $F_V$, $F_W$, and $F_{\Theta}$ represent forcing terms arising from model physics, turbulent mixing, spherical projections, and the planet's rotation.\newline
+\subsection{Map Projections, Coriolis and Curvature Terms}
+Map scale factors $m_x$ and $m_y$ are defined as the ratio of the distance in computational space to the corresponding distance on the planet's surface:
+\begin{equation}
+    (m_x,m_y)=\frac{(\delta{x}, \delta{y})}{\text{distance on the planet}}
+\end{equation}
+Thus we could refine the variables as
+\begin{equation}
+    \begin{cases}
+        U=\frac{\mu_d{u}}{m_y}\\
+        V=\frac{\mu_d{v}}{m_x}\\
+        W=\frac{\mu_d{w}}{m_y}\\
+        \Omega=\frac{\mu_d{u}}{m_y}
+    \end{cases}
+\end{equation}
+By applying these redifined variables, the governing prognostic equations including map factors could be written as\newline
+\begin{equation}
+    \begin{split}
+    \partial_t{U}+
+    m_x(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2Uu)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{Vu}))+\frac{1}{r\sin\theta}\frac{\partial{Wu}}{\partial{\psi}}+ \\
+    \frac{m_x}{m_y}{\mu_d}\alpha(\sin\theta\cos\psi\frac{\partial{p}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{p}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{p}}{\partial{\psi}})+ \\
+    \frac{m_x}{m_y}(\frac{\alpha}{\alpha_d}\partial_{\mu}p(\sin\theta\cos\psi\frac{\partial{\phi}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{\phi}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{\phi}}{\partial{\psi}})) \\
+    =F_{U}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \begin{split}
+    \partial_t{V}+
+    m_y(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2Uv)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{Vv}))+\frac{m_y}{m_x}\frac{1}{r\sin\theta}\frac{\partial{Wv}}{\partial{\psi}}+ \\
+    \frac{m_y}{m_x}{\mu_d}\alpha(\sin\theta\sin\psi\frac{\partial{p}}{\partial{r}}+\frac{\cos\theta\sin\psi}{r}\frac{\partial{p}}{\partial{\theta}}+\frac{\cos\psi}{r\sin\theta}\frac{\partial{p}}{\partial{\psi}})+ \\
+    \frac{m_y}{m_x}(\frac{\alpha}{\alpha_d}\partial_{\mu}p(\sin\theta\cos\psi\frac{\partial{\phi}}{\partial{r}}+\frac{\cos\theta\cos\psi}{r}\frac{\partial{\phi}}{\partial{\theta}}-\frac{\sin\psi}{r\sin\theta}\frac{\partial{\phi}}{\partial{\psi}})) \\
+    =F_{V}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \begin{split}
+    \partial_t{W}+
+    m_x(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U\omega)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V\omega}))+\frac{1}{r\sin\theta}\frac{\partial{W\omega}}{\partial{\psi}}+ \\
+    -{{m_y}^{-1}}g[\frac{\alpha}{\alpha_{d}}\partial_{\eta}p-\mu_{d}]
+    =F_{W}
+    \end{split}
+\end{equation}
+\begin{equation}
+    \partial_t{\Theta_m}+{m_x}{m_y}(\frac{1}{r^2}\frac{\partial}{\partial{r}}(r^2U\theta_m)+\frac{1}{r\sin\theta}\frac{\partial}{\partial\theta}(\sin\theta{V\theta_m}))+m_y\frac{1}{r\sin\theta}\frac{\partial{W\theta_m}}{\partial{\psi}}=F_{\Theta_m}
+\end{equation}
+
+\end{sloppypar}
 \end{document}

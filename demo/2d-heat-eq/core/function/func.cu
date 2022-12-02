@@ -579,7 +579,48 @@ int parti_diff(double* phi, double* result, int N1, int N2, int i, int j)
     parti_diff_k<<<dim3(std::ceil(double(N1 * N2) / threadsperblock), 1, 1), dim3(threadsperblock, 1, 1)>>>(phi, result, make_int2(N1, N2), make_int2(i, j));
     return EXIT_SUCCESS;
 }
+/*
+__global__ void laplace_k(double* phi, double* result, int2 d)
+{
+    int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = x_index;
+    int i, j;
+    i = 1;
+    j = 0;
+    __syncthreads();
+    if(((index / d.y + i) < d.x) && ((index / d.y + i) >= 0) && ((index % d.y + j) < d.y) && ((index % d.y + j) >= 0))
+    {
+        result[index + i * d.y + j] += phi[index];
+    }
+    i = -1;
+    j = 0;
+    __syncthreads();
+    if(((index / d.y + i) < d.x) && ((index / d.y + i) >= 0) && ((index % d.y + j) < d.y) && ((index % d.y + j) >= 0))
+    {
+        result[index + i * d.y + j] += phi[index];
+    }
+    i = 0;
+    j = 1;
+    __syncthreads();
+    if(((index / d.y + i) < d.x) && ((index / d.y + i) >= 0) && ((index % d.y + j) < d.y) && ((index % d.y + j) >= 0))
+    {
+        result[index + i * d.y + j] += phi[index];
+    }
+    i = 0;
+    j = -1;
+    __syncthreads();
+    if(((index / d.y + i) < d.x) && ((index / d.y + i) >= 0) && ((index % d.y + j) < d.y) && ((index % d.y + j) >= 0))
+    {
+        result[index + i * d.y + j] += phi[index];
+    }
+    __syncthreads();
+    if(index < d.x * d.y)
+    {
+        result[index] -= 4 * phi[index];
+    }
 
+}
+*/
 
 int laplace(double* phi, double* result, int N1, int N2)
 {
@@ -591,6 +632,15 @@ int laplace(double* phi, double* result, int N1, int N2)
     expectation_k<<<dim3(std::ceil(double(N1 * N2) / threadsperblock), 1, 1), dim3(threadsperblock, 1, 1)>>>(result, phi, result, make_double2(1, -4), make_int2(N1, N2));
     return EXIT_SUCCESS;
 }
+
+/*
+int laplace(double* phi, double* result, int N1, int N2)
+{
+    cudaMemset(result, 0, N1 * N2 * sizeof(double));
+    laplace_k<<<dim3(std::ceil(double(N1 * N2) / threadsperblock), 1, 1), dim3(threadsperblock, 1, 1)>>>(phi, result, make_int2(N1, N2));
+    return EXIT_SUCCESS;  
+}
+*/
 
 
 int expectation(double* x, double* y, double* result, int w1, int w2, int N1, int N2)
