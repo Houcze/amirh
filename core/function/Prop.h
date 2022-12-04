@@ -3,7 +3,8 @@
 #include <map>
 #include <string>
 
-namespace Prop{
+namespace Prop
+{
     using shape = std::map<std::string, int>;
     int size(shape);
     int dims(shape);

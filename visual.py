@@ -10,3 +10,4 @@ for rec in index:
     plt.imshow(ds)
     plt.axis('off')
     plt.savefig('./result-visual/{}.jpg'.format(rec.split('.')[0]))
+    

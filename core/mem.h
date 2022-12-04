@@ -20,9 +20,11 @@ public:
     double *register_variable(std::string);
     double *require_variable(std::string);
     bool isn(std::string);
+    Prop::shape registered_shape();
     void print_variable_list();
 };
 
 extern Nallocator Npool;
+extern Nallocator uNpool;
 
 #endif

@@ -1,546 +1,618 @@
+#include <ctime>
+#include <io/netcdf>
 #include <core/mem.h>
+#include <cuda_runtime.h>
 #include <core/function/Prop.h>
 #include <core/variables/Variables.h>
 
 Nallocator Npool;
 
-Variable operator+(Variable a, Variable b)
+int Variable::operator=(Variable a)
+{
+    shape = a.shape;
+    val = Npool.require_variable(name);
+
+    if (val != a.val)
+    {
+        cudaMemcpy(val, a.val, Prop::size(shape) * sizeof(double), cudaMemcpyDeviceToDevice);
+    }
+    return EXIT_SUCCESS;
+}
+
+Variable make_variable(std::string n, Prop::shape s, double *v)
+{
+    return Variable(n, s, v);
+}
+
+Variable::Variable(std::string n, Prop::shape s, double *v)
+{
+    name = n;
+    shape = s;
+    if (Npool.isn(name))
+    {
+        val = Npool.require_variable(name);
+    }
+    else
+    {
+        val = Npool.register_variable(name);
+    }
+    val = v;
+}
+
+Variable::Variable(const Variable &a)
+{
+    name = a.name;
+    shape = a.shape;
+    if (Npool.isn(name))
+    {
+        val = Npool.require_variable(name);
+    }
+    else
+    {
+        val = Npool.register_variable(name);
+    }
+    val = a.val;
+}
+
+Variable operator+(const Variable &a, const Variable &b)
 {
 
     double *result;
     std::string vname;
-    if (Npool.isn(std::get<std::string>(a) + "+" + std::get<std::string>(b)))
+    if (Npool.isn(a.name + "+" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "+" + std::get<std::string>(b));
-        vname = std::get<std::string>(a) + "+" + std::get<std::string>(b);
+        result = Npool.require_variable(a.name + "+" + b.name);
+        vname = a.name + "+" + b.name;
     }
-    else if (Npool.isn(std::get<std::string>(b) + "+" + std::get<std::string>(a)))
+    else if (Npool.isn(b.name + "+" + a.name))
     {
-        result = Npool.require_variable(std::get<std::string>(b) + "+" + std::get<std::string>(a));
-        vname = std::get<std::string>(b) + "+" + std::get<std::string>(a);
+        result = Npool.require_variable(b.name + "+" + a.name);
+        vname = b.name + "+" + a.name;
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "+" + std::get<std::string>(b));
-        vname = std::get<std::string>(a) + "+" + std::get<std::string>(b);
+        result = Npool.register_variable(a.name + "+" + b.name);
+        vname = a.name + "+" + b.name;
     }
 
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        add(std::get<double *>(a), std::get<double *>(b), result, s0["d1"]);
+        add(a.val, b.val, result, s0["d1"]);
         break;
     case 2:
-        add(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        add(a.val, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        add(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        add(a.val, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(vname, s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator+(Variable a, double b)
+Variable operator+(const Variable &a, double b)
 {
 
     double *result;
     std::string vname;
-    if (Npool.isn(std::get<std::string>(a) + "+" + std::to_string(b)))
+    if (Npool.isn(a.name + "+" + std::to_string(b)))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "+" + std::to_string(b));
-        vname = std::get<std::string>(a) + "+" + std::to_string(b);
+        result = Npool.require_variable(a.name + "+" + std::to_string(b));
+        vname = a.name + "+" + std::to_string(b);
     }
-    else if (Npool.isn(std::to_string(b) + "+" + std::get<std::string>(a)))
+    else if (Npool.isn(std::to_string(b) + "+" + a.name))
     {
-        result = Npool.require_variable(std::to_string(b) + "+" + std::get<std::string>(a));
-        vname = std::to_string(b) + "+" + std::get<std::string>(a);        
+        result = Npool.require_variable(std::to_string(b) + "+" + a.name);
+        vname = std::to_string(b) + "+" + a.name;
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "+" + std::to_string(b));
-        vname = std::get<std::string>(a) + "+" + std::to_string(b);
+        result = Npool.register_variable(a.name + "+" + std::to_string(b));
+        vname = a.name + "+" + std::to_string(b);
     }
 
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        add(std::get<double *>(a), b, result, s0["d1"]);
+        add(a.val, b, result, s0["d1"]);
         break;
     case 2:
-        add(std::get<double *>(a), b, result, s0["d1"], s0["d2"]);
+        add(a.val, b, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        add(std::get<double *>(a), b, result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        add(a.val, b, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(vname, s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator+(double a, Variable b)
+Variable operator+(double a, const Variable &b)
 {
 
     double *result;
     std::string vname;
-    if (Npool.isn(std::to_string(a) + "+" + std::get<std::string>(b)))
+    if (Npool.isn(std::to_string(a) + "+" + b.name))
     {
-        result = Npool.require_variable(std::to_string(a) + "+" + std::get<std::string>(b));
-        vname = std::to_string(a) + "+" + std::get<std::string>(b);
+        result = Npool.require_variable(std::to_string(a) + "+" + b.name);
+        vname = std::to_string(a) + "+" + b.name;
     }
-    else if (Npool.isn(std::get<std::string>(b) + "+" + std::to_string(a)))
+    else if (Npool.isn(b.name + "+" + std::to_string(a)))
     {
-        result = Npool.require_variable(std::get<std::string>(b) + "+" + std::to_string(a));
-        vname = std::get<std::string>(b) + "+" + std::to_string(a);        
+        result = Npool.require_variable(b.name + "+" + std::to_string(a));
+        vname = b.name + "+" + std::to_string(a);
     }
     else
     {
-        result = Npool.register_variable(std::to_string(a) + "+" + std::get<std::string>(b));
-        vname = std::to_string(a) + "+" + std::get<std::string>(b);
+        result = Npool.register_variable(std::to_string(a) + "+" + b.name);
+        vname = std::to_string(a) + "+" + b.name;
     }
 
-    Prop::shape s0 = std::get<Prop::shape>(b);
+    Prop::shape s0 = b.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        add(a, std::get<double *>(b), result, s0["d1"]);
+        add(a, b.val, result, s0["d1"]);
         break;
     case 2:
-        add(a, std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        add(a, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        add(a, std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        add(a, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(vname, s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator*(Variable a, Variable b)
+Variable operator*(const Variable &a, const Variable &b)
 {
     double *result;
     std::string vname;
-    if (Npool.isn(std::get<std::string>(a) + "*" + std::get<std::string>(b)))
+    if (Npool.isn(a.name + "*" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "*" + std::get<std::string>(b));
-        vname = std::get<std::string>(a) + "*" + std::get<std::string>(b);
+        result = Npool.require_variable(a.name + "*" + b.name);
+        vname = a.name + "*" + b.name;
     }
-    else if (Npool.isn(std::get<std::string>(b) + "*" + std::get<std::string>(a)))
+    else if (Npool.isn(b.name + "*" + a.name))
     {
-        result = Npool.require_variable(std::get<std::string>(b) + "*" + std::get<std::string>(a));
-        vname = std::get<std::string>(b) + "*" + std::get<std::string>(a);
-    }
-    else
-    {
-        result = Npool.register_variable(std::get<std::string>(a) + "*" + std::get<std::string>(b));
-        vname = std::get<std::string>(a) + "*" + std::get<std::string>(b);
-    }
-    Prop::shape s0 = std::get<Prop::shape>(a);
-    switch (Prop::dims(s0))
-    {
-    case 1:
-        mul(std::get<double *>(a), std::get<double *>(b), result, s0["d1"]);
-        break;
-    case 2:
-        mul(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"]);
-        break;
-    case 3:
-        mul(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
-    default:
-        break;
-    }
-    return std::make_tuple(vname, s0, result);
-}
-
-Variable operator*(Variable a, double b)
-{
-
-    double *result;
-    std::string vname;
-    if (Npool.isn(std::get<std::string>(a) + "*" + std::to_string(b)))
-    {
-        result = Npool.require_variable(std::get<std::string>(a) + "*" + std::to_string(b));
-        vname = std::get<std::string>(a) + "*" + std::to_string(b);
-    }
-    else if (Npool.isn(std::to_string(b) + "*" + std::get<std::string>(a)))
-    {
-        result = Npool.require_variable(std::to_string(b) + "*" + std::get<std::string>(a));
-        vname = std::to_string(b) + "*" + std::get<std::string>(a);        
+        result = Npool.require_variable(b.name + "*" + a.name);
+        vname = b.name + "*" + a.name;
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "*" + std::to_string(b));
-        vname = std::get<std::string>(a) + "*" + std::to_string(b);
+        result = Npool.register_variable(a.name + "*" + b.name);
+        vname = a.name + "*" + b.name;
     }
-
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        mul(std::get<double *>(a), b, result, s0["d1"]);
+        mul(a.val, b.val, result, s0["d1"]);
         break;
     case 2:
-        mul(std::get<double *>(a), b, result, s0["d1"], s0["d2"]);
+        mul(a.val, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        mul(std::get<double *>(a), b, result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        mul(a.val, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(vname, s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator*(double a, Variable b)
+Variable operator*(const Variable &a, double b)
 {
 
     double *result;
     std::string vname;
-    if (Npool.isn(std::to_string(a) + "*" + std::get<std::string>(b)))
+    if (Npool.isn(a.name + "*" + std::to_string(b)))
     {
-        result = Npool.require_variable(std::to_string(a) + "*" + std::get<std::string>(b));
-        vname = std::to_string(a) + "*" + std::get<std::string>(b);
+        result = Npool.require_variable(a.name + "*" + std::to_string(b));
+        vname = a.name + "*" + std::to_string(b);
     }
-    else if (Npool.isn(std::get<std::string>(b) + "*" + std::to_string(a)))
+    else if (Npool.isn(std::to_string(b) + "*" + a.name))
     {
-        result = Npool.require_variable(std::get<std::string>(b) + "*" + std::to_string(a));
-        vname = std::get<std::string>(b) + "*" + std::to_string(a);        
+        result = Npool.require_variable(std::to_string(b) + "*" + a.name);
+        vname = std::to_string(b) + "*" + a.name;
     }
     else
     {
-        result = Npool.register_variable(std::to_string(a) + "*" + std::get<std::string>(b));
-        vname = std::to_string(a) + "*" + std::get<std::string>(b);
+        result = Npool.register_variable(a.name + "*" + std::to_string(b));
+        vname = a.name + "*" + std::to_string(b);
     }
-
-    Prop::shape s0 = std::get<Prop::shape>(b);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        mul(a, std::get<double *>(b), result, s0["d1"]);
+        mul(a.val, b, result, s0["d1"]);
         break;
     case 2:
-        mul(a, std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        mul(a.val, b, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        mul(a, std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        mul(a.val, b, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(vname, s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator-(Variable a, Variable b)
+Variable operator*(double a, const Variable &b)
 {
+
     double *result;
-    if (Npool.isn(std::get<std::string>(a) + "-" + std::get<std::string>(b)))
+    std::string vname;
+    if (Npool.isn(std::to_string(a) + "*" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "-" + std::get<std::string>(b));
+        result = Npool.require_variable(std::to_string(a) + "*" + b.name);
+        vname = std::to_string(a) + "*" + b.name;
+    }
+    else if (Npool.isn(b.name + "*" + std::to_string(a)))
+    {
+        result = Npool.require_variable(b.name + "*" + std::to_string(a));
+        vname = b.name + "*" + std::to_string(a);
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "-" + std::get<std::string>(b));
+        result = Npool.register_variable(std::to_string(a) + "*" + b.name);
+        vname = std::to_string(a) + "*" + b.name;
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+
+    Prop::shape s0 = b.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        sub(std::get<double *>(a), std::get<double *>(b), result, s0["d1"]);
+        mul(a, b.val, result, s0["d1"]);
         break;
     case 2:
-        sub(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        mul(a, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        sub(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        mul(a, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::get<std::string>(a) + "-" + std::get<std::string>(b), s0, result);
+    return Variable(vname, s0, result);
 }
 
-Variable operator-(Variable a, double b)
+Variable operator-(const Variable &a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(std::get<std::string>(a) + "-" + std::to_string(b)))
+    if (Npool.isn(a.name + "-" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "-" + std::to_string(b));
+        result = Npool.require_variable(a.name + "-" + b.name);
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "-" + std::to_string(b));
+        result = Npool.register_variable(a.name + "-" + b.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        sub(std::get<double *>(a), b, result, s0["d1"]);
+        sub(a.val, b.val, result, s0["d1"]);
         break;
     case 2:
-        sub(std::get<double *>(a), b, result, s0["d1"], s0["d2"]);
+        sub(a.val, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        sub(std::get<double *>(a), b, result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        sub(a.val, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::get<std::string>(a) + "-" + std::to_string(b), s0, result);
+    return Variable(a.name + "-" + b.name, s0, result);
 }
 
-Variable operator-(double a, Variable b)
+Variable operator-(const Variable &a, double b)
 {
     double *result;
-    if (Npool.isn(std::to_string(a) + "-" + std::get<std::string>(b)))
+    if (Npool.isn(a.name + "-" + std::to_string(b)))
     {
-        result = Npool.require_variable(std::to_string(a) + "-" + std::get<std::string>(b));
+        result = Npool.require_variable(a.name + "-" + std::to_string(b));
     }
     else
     {
-        result = Npool.register_variable(std::to_string(a) + "-" + std::get<std::string>(b));
+        result = Npool.register_variable(a.name + "-" + std::to_string(b));
     }
-    Prop::shape s0 = std::get<Prop::shape>(b);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        sub(a, std::get<double *>(b), result, s0["d1"]);
+        sub(a.val, b, result, s0["d1"]);
         break;
     case 2:
-        sub(a, std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        sub(a.val, b, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        sub(a, std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        sub(a.val, b, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::to_string(a) + "-" + std::get<std::string>(b), s0, result);
+    return Variable(a.name + "-" + std::to_string(b), s0, result);
 }
 
-Variable operator/(Variable a, Variable b)
+Variable operator-(double a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(std::get<std::string>(a) + "/" + std::get<std::string>(b)))
+    if (Npool.isn(std::to_string(a) + "-" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "/" + std::get<std::string>(b));
+        result = Npool.require_variable(std::to_string(a) + "-" + b.name);
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "/" + std::get<std::string>(b));
+        result = Npool.register_variable(std::to_string(a) + "-" + b.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = b.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        div(std::get<double *>(a), std::get<double *>(b), result, s0["d1"]);
+        sub(a, b.val, result, s0["d1"]);
         break;
     case 2:
-        div(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        sub(a, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        div(std::get<double *>(a), std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        sub(a, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::get<std::string>(a) + "/" + std::get<std::string>(b), s0, result);
+    return Variable(std::to_string(a) + "-" + b.name, s0, result);
 }
 
-Variable operator/(Variable a, double b)
+Variable operator/(const Variable &a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(std::get<std::string>(a) + "/" + std::to_string(b)))
+    if (Npool.isn(a.name + "/" + b.name))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "/" + std::to_string(b));
+        result = Npool.require_variable(a.name + "/" + b.name);
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "/" + std::to_string(b));
+        result = Npool.register_variable(a.name + "/" + b.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        div(std::get<double *>(a), b, result, s0["d1"]);
+        div(a.val, b.val, result, s0["d1"]);
         break;
     case 2:
-        div(std::get<double *>(a), b, result, s0["d1"], s0["d2"]);
+        div(a.val, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        div(std::get<double *>(a), b, result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        div(a.val, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::get<std::string>(a) + "/" + std::to_string(b), s0, result);
+    return Variable(a.name + "/" + b.name, s0, result);
 }
 
-Variable operator/(double a, Variable b)
+Variable operator/(const Variable &a, double b)
 {
     double *result;
-    if (Npool.isn(std::to_string(a) + "/" + std::get<std::string>(b)))
+    if (Npool.isn(a.name + "/" + std::to_string(b)))
     {
-        result = Npool.require_variable(std::to_string(a) + "/" + std::get<std::string>(b));
+        result = Npool.require_variable(a.name + "/" + std::to_string(b));
     }
     else
     {
-        result = Npool.register_variable(std::to_string(a) + "/" + std::get<std::string>(b));
+        result = Npool.register_variable(a.name + "/" + std::to_string(b));
     }
-    Prop::shape s0 = std::get<Prop::shape>(b);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        div(a, std::get<double *>(b), result, s0["d1"]);
+        div(a.val, b, result, s0["d1"]);
         break;
     case 2:
-        div(a, std::get<double *>(b), result, s0["d1"], s0["d2"]);
+        div(a.val, b, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        div(a, std::get<double *>(b), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        div(a.val, b, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple(std::to_string(a) + "/" + std::get<std::string>(b), s0, result);
+    return Variable(a.name + "/" + std::to_string(b), s0, result);
 }
 
-
-
-Variable sin(Variable a)
+Variable operator/(double a, const Variable &b)
 {
     double *result;
-    if (Npool.isn("sin" + std::get<std::string>(a)))
+    if (Npool.isn(std::to_string(a) + "/" + b.name))
     {
-        result = Npool.require_variable("sin" + std::get<std::string>(a));
+        result = Npool.require_variable(std::to_string(a) + "/" + b.name);
     }
     else
     {
-        result = Npool.register_variable("sin" + std::get<std::string>(a));
+        result = Npool.register_variable(std::to_string(a) + "/" + b.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = b.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        sin(std::get<double *>(a), result, s0["d1"]);
+        div(a, b.val, result, s0["d1"]);
         break;
     case 2:
-        sin(std::get<double *>(a), result, s0["d1"], s0["d2"]);
+        div(a, b.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        sin(std::get<double *>(a), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        div(a, b.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple("sin" + std::get<std::string>(a), s0, result);
+    return Variable(std::to_string(a) + "/" + b.name, s0, result);
 }
 
-Variable cos(Variable a)
+Variable sin(const Variable &a)
 {
     double *result;
-    if (Npool.isn("cos" + std::get<std::string>(a)))
+    if (Npool.isn("sin" + a.name))
     {
-        result = Npool.require_variable("cos" + std::get<std::string>(a));
+        result = Npool.require_variable("sin" + a.name);
     }
     else
     {
-        result = Npool.register_variable("cos" + std::get<std::string>(a));
+        result = Npool.register_variable("sin" + a.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        cos(std::get<double *>(a), result, s0["d1"]);
+        sin(a.val, result, s0["d1"]);
         break;
     case 2:
-        cos(std::get<double *>(a), result, s0["d1"], s0["d2"]);
+        sin(a.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        cos(std::get<double *>(a), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        sin(a.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple("cos" + std::get<std::string>(a), s0, result);
+    return Variable("sin" + a.name, s0, result);
 }
 
-Variable tan(Variable a)
+Variable cos(const Variable &a)
 {
     double *result;
-    if (Npool.isn("tan" + std::get<std::string>(a)))
+    if (Npool.isn("cos" + a.name))
     {
-        result = Npool.require_variable("tan" + std::get<std::string>(a));
+        result = Npool.require_variable("cos" + a.name);
     }
     else
     {
-        result = Npool.register_variable("tan" + std::get<std::string>(a));
+        result = Npool.register_variable("cos" + a.name);
     }
-    Prop::shape s0 = std::get<Prop::shape>(a);
+    Prop::shape s0 = a.shape;
     switch (Prop::dims(s0))
     {
     case 1:
-        tan(std::get<double *>(a), result, s0["d1"]);
+        cos(a.val, result, s0["d1"]);
         break;
     case 2:
-        tan(std::get<double *>(a), result, s0["d1"], s0["d2"]);
+        cos(a.val, result, s0["d1"], s0["d2"]);
         break;
     case 3:
-        tan(std::get<double *>(a), result, s0["d1"], s0["d2"], s0["d3"]);
-        break;   
+        cos(a.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
     default:
         break;
     }
-    return std::make_tuple("tan" + std::get<std::string>(a), s0, result);
+    return Variable("cos" + a.name, s0, result);
 }
-/*
-Variable laplace(Variable a)
+
+Variable tan(const Variable &a)
 {
     double *result;
-    if (Npool.isn("laplace" + std::get<std::string>(a)))
+    if (Npool.isn("tan" + a.name))
     {
-        result = Npool.require_variable("laplace" + std::get<std::string>(a));
+        result = Npool.require_variable("tan" + a.name);
     }
     else
     {
-        result = Npool.register_variable("laplace" + std::get<std::string>(a));
+        result = Npool.register_variable("tan" + a.name);
     }
-    // The boundary is not processed
-    Prop::shape s0 = std::get<Prop::shape>(a);
-    laplace(std::get<double*>(a), result, s0["d1"], s0["d2"]);
-    return std::make_tuple("laplace" + std::get<std::string>(a), s0, result);  
+    Prop::shape s0 = a.shape;
+    switch (Prop::dims(s0))
+    {
+    case 1:
+        tan(a.val, result, s0["d1"]);
+        break;
+    case 2:
+        tan(a.val, result, s0["d1"], s0["d2"]);
+        break;
+    case 3:
+        tan(a.val, result, s0["d1"], s0["d2"], s0["d3"]);
+        break;
+    default:
+        break;
+    }
+    return Variable("tan" + a.name, s0, result);
 }
-*/
 
-Variable parti_diff(Variable a, int i, int j)
+Variable parti_diff(const Variable &a, int i, int j)
 {
     double *result;
-    if (Npool.isn(std::get<std::string>(a) + "(i)" + std::to_string(i) + "(j)" + std::to_string(j)))
+    if (Npool.isn(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j)))
     {
-        result = Npool.require_variable(std::get<std::string>(a) + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
+        result = Npool.require_variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
     }
     else
     {
-        result = Npool.register_variable(std::get<std::string>(a) + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
-    }       
-    Prop::shape s0 = std::get<Prop::shape>(a);
-    parti_diff(std::get<double*>(a), result, s0["d1"], s0["d2"], i, j);
-    return std::make_tuple(std::get<std::string>(a) + "(i)" + std::to_string(i) + "(j)" + std::to_string(j), s0, result);
+        result = Npool.register_variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
+    }
+    Prop::shape s0 = a.shape;
+    parti_diff(a.val, result, s0["d1"], s0["d2"], i, j);
+    return Variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j), s0, result);
 }
 
-Variable zero_boundary(Variable a)
+Variable zero_boundary(const Variable &a)
 {
-    Prop::shape s0 = std::get<Prop::shape>(a);
-    zero_boundary(std::get<double*>(a), s0["d1"], s0["d2"]);
+    Prop::shape s0 = a.shape;
+    zero_boundary(a.val, s0["d1"], s0["d2"]);
     return a;
 }
 
-Variable laplace(Variable a)
+Variable laplace(const Variable &a)
 {
-    return parti_diff(a, 1, 0) + parti_diff(a, -1, 0) + parti_diff(a, 0, 1) + parti_diff(a, 0, -1) - 4 * a;
+    Variable result = parti_diff(a, 1, 0) + parti_diff(a, -1, 0) + parti_diff(a, 0, 1) + parti_diff(a, 0, -1) - 4 * a;
+    return result;
 }
+
+int operator<<(Variable &a, const Variable &b)
+{
+    a.shape = b.shape;
+    cudaMemcpy(a.val, b.val, Prop::size(a.shape) * sizeof(double), cudaMemcpyDeviceToDevice);
+    return EXIT_SUCCESS;
+}
+
+Variable read_from_netcdf(char *filepath, char *name)
+{
+    Prop::shape p;
+    netcdf::ds_prop(&p, filepath, name);
+    Prop::shape s;
+    // 这里没有错误检查是否可以赋值
+    s["d1"] = p["latitude"];
+    s["d2"] = p["longitude"];
+
+    std::string vname = std::string(name);
+    // 此处没有检查变量是否存在于变量池
+    double *host_val;
+    host_val = (double *) malloc(Prop::size(s) * sizeof(double));
+    double *val;
+    if(!Npool.isn(vname))
+    {
+        val = Npool.register_variable(vname);
+    }
+    else
+    {
+        std::cout << std::string(name) + " has already been registered!" << std::endl;
+        vname = std::string(name) + "_" + std::to_string(std::time(0));
+        std::cout << vname + " will be registered!" << std::endl;
+        val = Npool.register_variable(vname);
+    }
+    netcdf::ds(host_val, filepath, name);
+    cudaMemcpy(val, host_val, Prop::size(s) * sizeof(double), cudaMemcpyHostToDevice);
+    free(host_val);
+    return Variable(vname, s, val);
+}
+
+
+
+

@@ -43,10 +43,13 @@ int Nallocator::register_seqlen(int len)
 
 void Nallocator::print_variable_list()
 {
-    for(auto it : vmap)
+    for (auto it : vmap)
     {
         std::cout << it.first << std::endl;
-    } 
+    }
 }
 
-
+Prop::shape Nallocator::registered_shape()
+{
+    return NOSH;
+}

@@ -1,12 +1,4 @@
-#include <iostream>
-#include <netcdf.h>
-#include <core/function/Prop.h>
-
-namespace netcdf {
-    int get_size(size_t *size, size_t *d, char *filepath, char* varname);
-    int ds_prop(Prop::shape* p, char* filepath, char* varname);
-    int ds(double *result, char* filepath, char* varname);
-}
+#include <io/netcdf>
 
 int netcdf::get_size(size_t *size, size_t *d, char *filepath, char* varname)
 {

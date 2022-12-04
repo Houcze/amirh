@@ -60,7 +60,7 @@ __global__ void add_k(double *input, double1 coeff, double *result, int3 d)
     }
 }
 
-__global__ void add_k(double1 coeff, double* input, double *result, int1 d)
+__global__ void add_k(double1 coeff, double *input, double *result, int1 d)
 {
     /*
      * 矩阵+常数
@@ -75,7 +75,7 @@ __global__ void add_k(double1 coeff, double* input, double *result, int1 d)
     }
 }
 
-__global__ void add_k(double1 coeff, double* input, double *result, int2 d)
+__global__ void add_k(double1 coeff, double *input, double *result, int2 d)
 {
     /*
      * 矩阵+常数
@@ -90,7 +90,7 @@ __global__ void add_k(double1 coeff, double* input, double *result, int2 d)
     }
 }
 
-__global__ void add_k(double1 coeff, double* input, double *result, int3 d)
+__global__ void add_k(double1 coeff, double *input, double *result, int3 d)
 {
     /*
      * 矩阵+常数
@@ -150,7 +150,7 @@ __global__ void sub_k(double *input, double1 coeff, double *result, int3 d)
     }
 }
 
-__global__ void sub_k(double1 coeff, double* input, double *result, int1 d)
+__global__ void sub_k(double1 coeff, double *input, double *result, int1 d)
 {
     /*
      * 常数减去矩阵
@@ -165,7 +165,7 @@ __global__ void sub_k(double1 coeff, double* input, double *result, int1 d)
     }
 }
 
-__global__ void sub_k(double1 coeff, double* input, double *result, int2 d)
+__global__ void sub_k(double1 coeff, double *input, double *result, int2 d)
 {
     /*
      * 常数减去矩阵
@@ -180,7 +180,7 @@ __global__ void sub_k(double1 coeff, double* input, double *result, int2 d)
     }
 }
 
-__global__ void sub_k(double1 coeff, double* input, double *result, int3 d)
+__global__ void sub_k(double1 coeff, double *input, double *result, int3 d)
 {
     /*
      * 常数减去矩阵
@@ -240,7 +240,7 @@ __global__ void mul_k(double *input, double1 coeff, double *result, int3 d)
     }
 }
 
-__global__ void mul_k(double1 coeff, double* input, double *result, int1 d)
+__global__ void mul_k(double1 coeff, double *input, double *result, int1 d)
 {
     /*
      * 矩阵*常数
@@ -255,7 +255,7 @@ __global__ void mul_k(double1 coeff, double* input, double *result, int1 d)
     }
 }
 
-__global__ void mul_k(double1 coeff, double* input, double *result, int2 d)
+__global__ void mul_k(double1 coeff, double *input, double *result, int2 d)
 {
     /*
      * 矩阵*常数
@@ -270,7 +270,7 @@ __global__ void mul_k(double1 coeff, double* input, double *result, int2 d)
     }
 }
 
-__global__ void mul_k(double1 coeff, double* input, double *result, int3 d)
+__global__ void mul_k(double1 coeff, double *input, double *result, int3 d)
 {
     /*
      * 矩阵*常数
@@ -330,7 +330,7 @@ __global__ void div_k(double *input, double1 coeff, double *result, int3 d)
     }
 }
 
-__global__ void div_k(double1 coeff, double* input, double *result, int1 d)
+__global__ void div_k(double1 coeff, double *input, double *result, int1 d)
 {
     /*
      * 常数/矩阵
@@ -345,7 +345,7 @@ __global__ void div_k(double1 coeff, double* input, double *result, int1 d)
     }
 }
 
-__global__ void div_k(double1 coeff, double* input, double *result, int2 d)
+__global__ void div_k(double1 coeff, double *input, double *result, int2 d)
 {
     /*
      * 常数/矩阵
@@ -360,7 +360,7 @@ __global__ void div_k(double1 coeff, double* input, double *result, int2 d)
     }
 }
 
-__global__ void div_k(double1 coeff, double* input, double *result, int3 d)
+__global__ void div_k(double1 coeff, double *input, double *result, int3 d)
 {
     /*
      * 常数/矩阵
@@ -1124,16 +1124,16 @@ int save_txt_dev(double *var, std::string filepath, int N1, int N2)
     return EXIT_SUCCESS;
 }
 
-int zero_boundary(double* result, int N1, int N2)
+int zero_boundary(double *result, int N1, int N2)
 {
-    double* result_host;
-    result_host = (double*) malloc(N1 * N2 * sizeof(double));
+    double *result_host;
+    result_host = (double *)malloc(N1 * N2 * sizeof(double));
     cudaMemcpy(result_host, result, N1 * N2 * sizeof(double), cudaMemcpyDeviceToHost);
-    for(int i=0; i<N1; i++)
+    for (int i = 0; i < N1; i++)
     {
-        for(int j=0; j<N2; j++)
+        for (int j = 0; j < N2; j++)
         {
-            if((i == 0) || (j == 0) || (j == N2-1) || (i==N1-1))
+            if ((i == 0) || (j == 0) || (j == N2 - 1) || (i == N1 - 1))
             {
                 result_host[i * N2 + j] = 0;
             }

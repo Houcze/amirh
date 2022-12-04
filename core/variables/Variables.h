@@ -1,29 +1,45 @@
 #include <core/function/Prop.h>
-
 #include <string>
-#include <tuple>
 
-using Variable = std::tuple<std::string, Prop::shape, double *>;
+// using Variable = std::tuple<std::string, Prop::shape, double *>;
 
-Variable operator+(Variable a, Variable b);
-Variable operator-(Variable a, Variable b);
-Variable operator*(Variable a, Variable b);
-Variable operator/(Variable a, Variable b);
+struct Variable
+{
+    std::string name;
+    Prop::shape shape;
+    double *val;
+    Variable(std::string, Prop::shape, double *);
+    Variable(const Variable &);
+    int operator=(Variable);
+};
 
-Variable operator+(double a, Variable b);
-Variable operator-(double a, Variable b);
-Variable operator*(double a, Variable b);
-Variable operator/(double a, Variable b);
+Variable make_variable(std::string name, Prop::shape s, double *val);
 
-Variable operator+(Variable a, double b);
-Variable operator-(Variable a, double b);
-Variable operator*(Variable a, double b);
-Variable operator/(Variable a, double b);
+Variable operator+(const Variable &a, const Variable &b);
+Variable operator-(const Variable &a, const Variable &b);
+Variable operator*(const Variable &a, const Variable &b);
+Variable operator/(const Variable &a, const Variable &b);
 
-Variable sin(Variable a);
-Variable cos(Variable a);
-Variable tan(Variable a);
+Variable operator+(double a, const Variable &b);
+Variable operator-(double a, const Variable &b);
+Variable operator*(double a, const Variable &b);
+Variable operator/(double a, const Variable &b);
 
-Variable parti_diff(Variable a, int i, int j);
-Variable laplace(Variable a);
-Variable zero_boundary(Variable a);
+Variable operator+(const Variable &a, double b);
+Variable operator-(const Variable &a, double b);
+Variable operator*(const Variable &a, double b);
+Variable operator/(const Variable &a, double b);
+
+Variable sin(const Variable &a);
+Variable cos(const Variable &a);
+Variable tan(const Variable &a);
+
+Variable parti_diff(const Variable &a, int i, int j);
+Variable zero_boundary(const Variable &a);
+
+Variable laplace(const Variable &a);
+
+int operator<<(Variable &a, const Variable &b);
+
+
+Variable read_from_netcdf(char* filepath, char* name);

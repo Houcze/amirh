@@ -3,7 +3,7 @@
 int Prop::size(Prop::shape p)
 {
     int size{1};
-    for(const auto& it : p)
+    for (const auto &it : p)
     {
         size *= (it.second);
     }
