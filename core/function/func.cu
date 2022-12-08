@@ -6,13 +6,15 @@
  */
 
 #include <cmath>
-#include <func.h>
+#include <core/function/func.h>
 #include <vector>
 #include <fstream>
 #include <string>
 #include <memory>
 #include <iostream>
 #include <cuda_runtime.h>
+#include <core/function/Prop.h>
+#include <cublas_v2.h>
 static const int threadsperblock = 128;
 
 __global__ void add_k(double *input, double1 coeff, double *result, int1 d)
@@ -754,6 +756,13 @@ __global__ void expectation_k(double *x, double *y, double *z, double *result, d
     }
 }
 
+/**
+ * @brief 二维，非刚性边界
+ * @param phi
+ * @param result
+ * @param d
+ * @param ij
+ */
 __global__ void parti_diff_k(double *phi, double *result, int2 d, int2 ij)
 {
     int x_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -1141,5 +1150,56 @@ int zero_boundary(double *result, int N1, int N2)
     }
     cudaMemcpy(result, result_host, N1 * N2 * sizeof(double), cudaMemcpyHostToDevice);
     free(result_host);
+    return EXIT_SUCCESS;
+}
+
+__global__ void zero_boundary_k(double *arr, int2 N)
+{
+    int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+
+    int index = x_index;
+    if (index < N.x * N.y)
+    {
+        int i = index / N.y;
+        int j = index % N.y;
+        if ((i == 0) || (j == 0) || (j == N.y - 1) || (i == N.x - 1))
+            arr[index] = 0.;
+    }
+}
+
+int zero_boundary_dev(double *result, int N1, int N2)
+{
+    zero_boundary_k<<<ceil(double(N1 * N2) / threadsperblock), threadsperblock>>>(result, make_int2(N1, N2));
+    return EXIT_SUCCESS;
+}
+
+int mmul(const double *A, const double *B, double *C, const int m, const int k, const int n, const double alpha, const double beta)
+{
+    int lda = m;
+    int ldb = n;
+    int ldc = m;
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, k, n, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    cublasDestroy(handle);
+    return EXIT_SUCCESS;
+}
+
+__global__ void transpose_k(const double *odata, double *idata, int2 oij, int2 iij)
+{
+    int x_index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = x_index;
+
+    if(index < oij.x * oij.y)
+    {
+        int i = index / oij.y;
+        int j = index % oij.y;
+        idata[j * iij.y + i] = odata[index];
+    }
+}
+
+int transpose(const double *odata, double *idata, int N1, int N2)
+{
+    transpose_k<<<ceil(double(N1 * N2) / threadsperblock), threadsperblock>>>(odata, idata, make_int2(N1, N2), make_int2(N2, N1));
     return EXIT_SUCCESS;
 }

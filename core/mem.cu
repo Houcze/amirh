@@ -1,4 +1,5 @@
 #include <core/mem.h>
+#include <iostream>
 #include <cuda_runtime.h>
 
 double *Nallocator::register_variable(std::string vname)
@@ -6,7 +7,22 @@ double *Nallocator::register_variable(std::string vname)
     double *v;
     cudaMalloc(&v, Prop::size(NOSH) * sizeof(double));
     vmap[vname] = v;
+    vargs[vname] = NOSH;
     return v;
+}
+
+double *Nallocator::register_variable(std::string vname, Prop::shape s)
+{
+    double *v;
+    cudaMalloc(&v, sizeof(double) * Prop::size(s));
+    vmap[vname] = v;
+    vargs[vname] = s;
+    return v;
+}
+
+void Nallocator::print_vmap_length()
+{
+    std::cout << vmap.size() << std::endl;
 }
 
 double *Nallocator::require_variable(std::string vname)

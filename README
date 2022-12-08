@@ -1,3 +1,9 @@
-# AMIRH
+#AMIRH
 
-This model applies to all terrestrial planets.
+AMIRH将会使用python和c++/cuda构建
+
+
+* 11-21 写出通量逻辑
+** 分析适用于火星的混合sigma坐标系设置
+** 地形重力波模拟
+** openfoam初尝试

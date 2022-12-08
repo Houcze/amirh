@@ -93,5 +93,11 @@ int save_txt_dev(double *var, std::string filepath, int N1, int N2);
 
 int parti_diff(double *phi, double *result, int N1, int N2, int i, int j);
 int zero_boundary(double* result, int N1, int N2);
+int zero_boundary_dev(double* result, int N1, int N2);
+
+// C = \alpha A.B + \beta C
+int mmul(const double *A, const double *B, double *C, const int m, const int n, const int k, const double alpha = 1, const double beta = 0);
+
+int transpose(const double *odata, double *idata, int N1, int N2);
 
 #endif

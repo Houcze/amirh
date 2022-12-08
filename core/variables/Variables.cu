@@ -1,4 +1,5 @@
 #include <ctime>
+#include <any>
 #include <io/netcdf>
 #include <core/mem.h>
 #include <cuda_runtime.h>
@@ -7,14 +8,100 @@
 
 Nallocator Npool;
 
+/**
+ * @brief 这个函数适用于标准长度被注册的场景
+ * @param name
+ * @param allocator
+ * @return double*
+ */
+double *alloc(std::string name, Nallocator allocator = Npool)
+{
+    double *val;
+    if (allocator.isn(name))
+    {
+        val = allocator.require_variable(name);
+    }
+    else
+    {
+        val = allocator.register_variable(name);
+    }
+    return val;
+}
+
+/**
+ * @brief 这个函数适用于标准长度被注册的场景
+ * @param name
+ * @param ename
+ * @param allocator
+ * @return double*
+ */
+double *ealloc(std::string name, std::string ename, Nallocator allocator = Npool)
+{
+    double *val;
+    if (!allocator.isn(name))
+    {
+        val = allocator.register_variable(name);
+    }
+    else
+    {
+        std::cout << name + " has already been registered!" << std::endl;
+        std::cout << ename + " will be registered!" << std::endl;
+        val = allocator.register_variable(ename);
+    }
+    return val;
+}
+
+double *alloc(std::string name, Prop::shape s, Nallocator &allocator = Npool)
+{
+    double *val;
+    if (allocator.isn(name))
+    {
+        val = allocator.require_variable(name);
+    }
+    else
+    {
+        val = allocator.register_variable(name, s);
+    }
+    return val;
+}
+
+Variable ealloc(std::string name, std::string ename, Prop::shape s, Nallocator &allocator = Npool)
+{
+    double *val;
+    std::string registered_name;
+    if (allocator.isn(name))
+    {
+        std::cout << name + " has already been registered!" << std::endl;
+        std::cout << ename + " will be registered!" << std::endl;
+        val = allocator.register_variable(ename, s);
+        registered_name = ename;
+    }
+    else
+    {
+        val = allocator.register_variable(name, s);
+        registered_name = name;
+    }
+    return Variable(registered_name, s, val);
+}
+
 int Variable::operator=(Variable a)
 {
-    shape = a.shape;
-    val = Npool.require_variable(name);
-
-    if (val != a.val)
+    if ((shape == a.shape) || (Prop::dims(shape) == 0))
     {
-        cudaMemcpy(val, a.val, Prop::size(shape) * sizeof(double), cudaMemcpyDeviceToDevice);
+        val = alloc(name, a.shape);
+        if (val != a.val)
+        {
+            cudaMemcpy(val, a.val, Prop::size(a.shape) * sizeof(double), cudaMemcpyDeviceToDevice);
+        }
+    }
+    if ((shape != a.shape) && (Prop::dims(shape) != 0))
+    {
+        // 此处将会注册一个同名但是形状不一致的变量
+        val = alloc(name + Prop::to_string(a.shape), a.shape);
+        if (val != a.val)
+        {
+            cudaMemcpy(val, a.val, Prop::size(a.shape) * sizeof(double), cudaMemcpyDeviceToDevice);
+        }
     }
     return EXIT_SUCCESS;
 }
@@ -28,14 +115,7 @@ Variable::Variable(std::string n, Prop::shape s, double *v)
 {
     name = n;
     shape = s;
-    if (Npool.isn(name))
-    {
-        val = Npool.require_variable(name);
-    }
-    else
-    {
-        val = Npool.register_variable(name);
-    }
+    val = alloc(name, shape);
     val = v;
 }
 
@@ -43,39 +123,24 @@ Variable::Variable(const Variable &a)
 {
     name = a.name;
     shape = a.shape;
-    if (Npool.isn(name))
-    {
-        val = Npool.require_variable(name);
-    }
-    else
-    {
-        val = Npool.register_variable(name);
-    }
+    val = alloc(name, shape);
     val = a.val;
+}
+
+Variable init_Variable(std::string name, Prop::shape s, const void *v)
+{
+    double *val;
+    val = alloc(name, s);
+    cudaMemcpy(val, v, sizeof(double) * Prop::size(s), cudaMemcpyHostToDevice);
+    return Variable(name, s, val);
 }
 
 Variable operator+(const Variable &a, const Variable &b)
 {
-
     double *result;
-    std::string vname;
-    if (Npool.isn(a.name + "+" + b.name))
-    {
-        result = Npool.require_variable(a.name + "+" + b.name);
-        vname = a.name + "+" + b.name;
-    }
-    else if (Npool.isn(b.name + "+" + a.name))
-    {
-        result = Npool.require_variable(b.name + "+" + a.name);
-        vname = b.name + "+" + a.name;
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "+" + b.name);
-        vname = a.name + "+" + b.name;
-    }
-
+    std::string vname = a.name + "+" + b.name;
     Prop::shape s0 = a.shape;
+    result = alloc(vname, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -97,24 +162,9 @@ Variable operator+(const Variable &a, double b)
 {
 
     double *result;
-    std::string vname;
-    if (Npool.isn(a.name + "+" + std::to_string(b)))
-    {
-        result = Npool.require_variable(a.name + "+" + std::to_string(b));
-        vname = a.name + "+" + std::to_string(b);
-    }
-    else if (Npool.isn(std::to_string(b) + "+" + a.name))
-    {
-        result = Npool.require_variable(std::to_string(b) + "+" + a.name);
-        vname = std::to_string(b) + "+" + a.name;
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "+" + std::to_string(b));
-        vname = a.name + "+" + std::to_string(b);
-    }
-
     Prop::shape s0 = a.shape;
+    std::string vname = a.name + "+" + std::to_string(b);
+    result = alloc(vname, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -136,24 +186,10 @@ Variable operator+(double a, const Variable &b)
 {
 
     double *result;
-    std::string vname;
-    if (Npool.isn(std::to_string(a) + "+" + b.name))
-    {
-        result = Npool.require_variable(std::to_string(a) + "+" + b.name);
-        vname = std::to_string(a) + "+" + b.name;
-    }
-    else if (Npool.isn(b.name + "+" + std::to_string(a)))
-    {
-        result = Npool.require_variable(b.name + "+" + std::to_string(a));
-        vname = b.name + "+" + std::to_string(a);
-    }
-    else
-    {
-        result = Npool.register_variable(std::to_string(a) + "+" + b.name);
-        vname = std::to_string(a) + "+" + b.name;
-    }
-
     Prop::shape s0 = b.shape;
+    std::string vname = b.name + "+" + std::to_string(a);
+    result = alloc(vname, s0);
+
     switch (Prop::dims(s0))
     {
     case 1:
@@ -174,23 +210,11 @@ Variable operator+(double a, const Variable &b)
 Variable operator*(const Variable &a, const Variable &b)
 {
     double *result;
-    std::string vname;
-    if (Npool.isn(a.name + "*" + b.name))
-    {
-        result = Npool.require_variable(a.name + "*" + b.name);
-        vname = a.name + "*" + b.name;
-    }
-    else if (Npool.isn(b.name + "*" + a.name))
-    {
-        result = Npool.require_variable(b.name + "*" + a.name);
-        vname = b.name + "*" + a.name;
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "*" + b.name);
-        vname = a.name + "*" + b.name;
-    }
     Prop::shape s0 = a.shape;
+
+    std::string vname = a.name + "*" + b.name;
+    result = alloc(vname, s0);
+
     switch (Prop::dims(s0))
     {
     case 1:
@@ -212,23 +236,10 @@ Variable operator*(const Variable &a, double b)
 {
 
     double *result;
-    std::string vname;
-    if (Npool.isn(a.name + "*" + std::to_string(b)))
-    {
-        result = Npool.require_variable(a.name + "*" + std::to_string(b));
-        vname = a.name + "*" + std::to_string(b);
-    }
-    else if (Npool.isn(std::to_string(b) + "*" + a.name))
-    {
-        result = Npool.require_variable(std::to_string(b) + "*" + a.name);
-        vname = std::to_string(b) + "*" + a.name;
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "*" + std::to_string(b));
-        vname = a.name + "*" + std::to_string(b);
-    }
     Prop::shape s0 = a.shape;
+    std::string vname = std::to_string(b) + "*" + a.name;
+    result = alloc(vname, s0);
+
     switch (Prop::dims(s0))
     {
     case 1:
@@ -250,24 +261,10 @@ Variable operator*(double a, const Variable &b)
 {
 
     double *result;
-    std::string vname;
-    if (Npool.isn(std::to_string(a) + "*" + b.name))
-    {
-        result = Npool.require_variable(std::to_string(a) + "*" + b.name);
-        vname = std::to_string(a) + "*" + b.name;
-    }
-    else if (Npool.isn(b.name + "*" + std::to_string(a)))
-    {
-        result = Npool.require_variable(b.name + "*" + std::to_string(a));
-        vname = b.name + "*" + std::to_string(a);
-    }
-    else
-    {
-        result = Npool.register_variable(std::to_string(a) + "*" + b.name);
-        vname = std::to_string(a) + "*" + b.name;
-    }
-
     Prop::shape s0 = b.shape;
+    std::string vname = std::to_string(a) + "*" + b.name;
+    result = alloc(vname, s0);
+
     switch (Prop::dims(s0))
     {
     case 1:
@@ -288,15 +285,8 @@ Variable operator*(double a, const Variable &b)
 Variable operator-(const Variable &a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(a.name + "-" + b.name))
-    {
-        result = Npool.require_variable(a.name + "-" + b.name);
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "-" + b.name);
-    }
     Prop::shape s0 = a.shape;
+    result = alloc(a.name + "-" + b.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -317,15 +307,8 @@ Variable operator-(const Variable &a, const Variable &b)
 Variable operator-(const Variable &a, double b)
 {
     double *result;
-    if (Npool.isn(a.name + "-" + std::to_string(b)))
-    {
-        result = Npool.require_variable(a.name + "-" + std::to_string(b));
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "-" + std::to_string(b));
-    }
     Prop::shape s0 = a.shape;
+    result = alloc(a.name + "-" + std::to_string(b), s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -346,15 +329,8 @@ Variable operator-(const Variable &a, double b)
 Variable operator-(double a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(std::to_string(a) + "-" + b.name))
-    {
-        result = Npool.require_variable(std::to_string(a) + "-" + b.name);
-    }
-    else
-    {
-        result = Npool.register_variable(std::to_string(a) + "-" + b.name);
-    }
     Prop::shape s0 = b.shape;
+    result = alloc(std::to_string(a) + "-" + b.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -375,15 +351,8 @@ Variable operator-(double a, const Variable &b)
 Variable operator/(const Variable &a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(a.name + "/" + b.name))
-    {
-        result = Npool.require_variable(a.name + "/" + b.name);
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "/" + b.name);
-    }
     Prop::shape s0 = a.shape;
+    result = alloc(a.name + "/" + b.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -404,15 +373,8 @@ Variable operator/(const Variable &a, const Variable &b)
 Variable operator/(const Variable &a, double b)
 {
     double *result;
-    if (Npool.isn(a.name + "/" + std::to_string(b)))
-    {
-        result = Npool.require_variable(a.name + "/" + std::to_string(b));
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "/" + std::to_string(b));
-    }
     Prop::shape s0 = a.shape;
+    result = alloc(a.name + "/" + std::to_string(b), s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -433,15 +395,8 @@ Variable operator/(const Variable &a, double b)
 Variable operator/(double a, const Variable &b)
 {
     double *result;
-    if (Npool.isn(std::to_string(a) + "/" + b.name))
-    {
-        result = Npool.require_variable(std::to_string(a) + "/" + b.name);
-    }
-    else
-    {
-        result = Npool.register_variable(std::to_string(a) + "/" + b.name);
-    }
     Prop::shape s0 = b.shape;
+    result = alloc(std::to_string(a) + "/" + b.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -462,15 +417,8 @@ Variable operator/(double a, const Variable &b)
 Variable sin(const Variable &a)
 {
     double *result;
-    if (Npool.isn("sin" + a.name))
-    {
-        result = Npool.require_variable("sin" + a.name);
-    }
-    else
-    {
-        result = Npool.register_variable("sin" + a.name);
-    }
     Prop::shape s0 = a.shape;
+    result = alloc("sin" + a.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -491,15 +439,8 @@ Variable sin(const Variable &a)
 Variable cos(const Variable &a)
 {
     double *result;
-    if (Npool.isn("cos" + a.name))
-    {
-        result = Npool.require_variable("cos" + a.name);
-    }
-    else
-    {
-        result = Npool.register_variable("cos" + a.name);
-    }
     Prop::shape s0 = a.shape;
+    result = alloc("cos" + a.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -520,15 +461,8 @@ Variable cos(const Variable &a)
 Variable tan(const Variable &a)
 {
     double *result;
-    if (Npool.isn("tan" + a.name))
-    {
-        result = Npool.require_variable("tan" + a.name);
-    }
-    else
-    {
-        result = Npool.register_variable("tan" + a.name);
-    }
     Prop::shape s0 = a.shape;
+    result = alloc("tan" + a.name, s0);
     switch (Prop::dims(s0))
     {
     case 1:
@@ -549,24 +483,10 @@ Variable tan(const Variable &a)
 Variable parti_diff(const Variable &a, int i, int j)
 {
     double *result;
-    if (Npool.isn(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j)))
-    {
-        result = Npool.require_variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
-    }
-    else
-    {
-        result = Npool.register_variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j));
-    }
     Prop::shape s0 = a.shape;
+    result = alloc(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j), s0);
     parti_diff(a.val, result, s0["d1"], s0["d2"], i, j);
     return Variable(a.name + "(i)" + std::to_string(i) + "(j)" + std::to_string(j), s0, result);
-}
-
-Variable zero_boundary(const Variable &a)
-{
-    Prop::shape s0 = a.shape;
-    zero_boundary(a.val, s0["d1"], s0["d2"]);
-    return a;
 }
 
 Variable laplace(const Variable &a)
@@ -588,31 +508,75 @@ Variable read_from_netcdf(char *filepath, char *name)
     netcdf::ds_prop(&p, filepath, name);
     Prop::shape s;
     // 这里没有错误检查是否可以赋值
-    s["d1"] = p["latitude"];
-    s["d2"] = p["longitude"];
+    if (p.count("latitude"))
+    {
+        s["d1"] = p["latitude"];
+    }
+    else
+    {
+        s["d1"] = 1;
+    }
+
+    if (p.count("longitude"))
+    {
+        s["d2"] = p["longitude"];
+    }
+    else
+    {
+        s["d2"] = 1;
+    }
 
     std::string vname = std::string(name);
     // 此处没有检查变量是否存在于变量池
     double *host_val;
-    host_val = (double *) malloc(Prop::size(s) * sizeof(double));
-    double *val;
-    if(!Npool.isn(vname))
-    {
-        val = Npool.register_variable(vname);
-    }
-    else
-    {
-        std::cout << std::string(name) + " has already been registered!" << std::endl;
-        vname = std::string(name) + "_" + std::to_string(std::time(0));
-        std::cout << vname + " will be registered!" << std::endl;
-        val = Npool.register_variable(vname);
-    }
+    host_val = (double *)malloc(Prop::size(s) * sizeof(double));
+
+    Variable result = ealloc(vname, std::string(name) + "_" + std::to_string(std::time(0)), s);
     netcdf::ds(host_val, filepath, name);
-    cudaMemcpy(val, host_val, Prop::size(s) * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(result.val, host_val, Prop::size(s) * sizeof(double), cudaMemcpyHostToDevice);
     free(host_val);
+    return result;
+}
+
+Variable mul2(const Variable &a, const Variable &b)
+{
+    double *result;
+    double *result_t;
+
+    std::string vname = a.name + "." + b.name;
+    Prop::shape s;
+    Prop::shape s_t;
+    Prop::shape s_a = a.shape;
+    Prop::shape s_b = b.shape;
+    s["d1"] = s_a["d1"];
+    s["d2"] = s_b["d2"];
+    s_t["d2"] = s["d1"];
+    s_t["d1"] = s["d2"];
+
+    int m = s_a["d1"];
+    int n1 = s_a["d2"];
+    int n2 = s_b["d1"];
+    int n = (n1 + n2) / 2;
+    int k = s_b["d2"];
+
+    result_t = alloc(vname + ".t", s_t);
+    result = alloc(vname, s);
+    mmul(a.val, b.val, result_t, m, k, n);
+    transpose(result_t, result, s["d2"], s["d1"]);
+    return Variable(vname, s, result);
+}
+
+Variable ones2(Prop::shape s)
+{
+    double *val;
+    std::string vname = "1d1:" + std::to_string(s["d1"]) + "d2:" + std::to_string(s["d2"]);
+    val = alloc(vname, s);
+    set_cons(val, 1., s["d1"], s["d2"]);
     return Variable(vname, s, val);
 }
 
-
-
-
+void print_info(const Variable &v)
+{
+    std::cout << v.name << " info:\n";
+    Prop::print(v.shape);
+}
